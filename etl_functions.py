@@ -36,7 +36,8 @@ def load_cmed(path, preprocess = False):
 
 
 
-def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopwords_ai = False, rem_stopwords_pr = False, abbreviate_prs = True, rem_rep_tokens = False):
+def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopwords_ai = False,
+                           rem_stopwords_pr = False, abbreviate_prs = True, rem_rep_tokens = False):
     text = text.lower()                   # Apply lowercase
     text = unidecode(text)                # Remove acentuacion
     text = re.sub('\W',' ', text)         # Removes specials characters and leaves only words
@@ -363,8 +364,7 @@ def sort_alphabetically(text):
 
 
 # Load the .csv with the data extracted from a public notice
-def csv_licon_edital(path, drop_columns, desc_column, und_column, sep = ';', decimal = ',',
-                     preprocess = False):
+def load_notice(path, drop_columns, desc_column, und_column, sep = ';', decimal = ',', preprocess = False):
     
     # Load the .csv
     df_le = pd.read_csv(path, sep = sep, decimal = decimal)
@@ -386,7 +386,7 @@ def csv_licon_edital(path, drop_columns, desc_column, und_column, sep = ';', dec
             df_le.at[idx, df_le.columns[und_column]] = preprocessing_function(row[und_column], rem_stopwords_pr = True)
             
     # Creation of the column where the indices of the CMED will be stored
-    df_le['medicamentos'] = ""
+    df_le['cmed_indexes'] = ""
 
     return df_le
 
