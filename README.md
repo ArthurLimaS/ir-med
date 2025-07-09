@@ -1,6 +1,8 @@
 # ir-med
 IR-Med - An Ad Hoc Information Retrieval Approach for Medicines’ Purchasing Public Notices
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArthurLimaS/ir-med/blob/main/example_notebook.ipynb)
+
 ## Citation
 This repository was cited in:
 > Silva, A. L., Lima, A. M., Valença, G., & Cabral, G. G. (2025, May). Ad-hoc vs LLM based System for Information Retrieval in Large Tabular Data: A Comparative Study in Public Medicine Procurement Audits. In Simpósio Brasileiro de Sistemas de Informação (SBSI) (pp. 751-758). SBC.  
