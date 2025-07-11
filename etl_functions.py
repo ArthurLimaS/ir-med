@@ -6,11 +6,54 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 from unidecode import unidecode
 
+def template():
+    """
+    Breve descrição da função
+    
+    Parameters:
+    ---------
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
+
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
+
+    Returns:
+    ---------
+    {return_type}
+        {Return description}
+    """
+    return -1
 
 
-
-# Load the CMED dataset from a file
 def load_cmed(path, preprocess = False):
+    """
+    Load the CMED dataset from a file
+    
+    Parameters:
+    ---------
+    path : str, path object or file-like object
+        (Copied from pandas documentation: https://pandas.pydata.org/)
+
+        Any valid string path is acceptable. The string could be a URL. Valid
+        URL schemes include http, ftp, s3, gs, and file. For file URLs, a host
+        is expected. A local file could be: file://localhost/path/to/table.csv.
+
+        If you want to pass in a path object, pandas accepts any
+        ``os.PathLike``.
+
+        By file-like object, we refer to objects with a ``read()`` method, such
+        as a file handle (e.g. via builtin ``open`` function) or ``StringIO``.
+    
+    preprocess : bool, default False
+        Indicates whether the preprocessing function should be applied to the
+        CMED data.
+
+    Returns:
+    ---------
+    {return_type}
+        {Return description}
+    """
     # Load the .csv
     df_cmed = pd.read_csv(path, sep = ";")
 
