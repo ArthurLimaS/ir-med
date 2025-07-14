@@ -26,62 +26,81 @@ def template():
     return -1
 
 
-def load_cmed(path, sep=';', preprocess = False):
+def load_cmed(path, sep=';'):
     """
     Load the CMED dataset from a file
     
-    Parameters:
+    Parameters
     ---------
     path : str, path object or file-like object
-        (Copied from pandas documentation: https://pandas.pydata.org/)
+        Path to a CSV file containing the CMED table. Can be a string, a
+        PathLike object, or a file-like object with a ``read()`` method.
 
-        Any valid string path is acceptable. The string could be a URL. Valid
-        URL schemes include http, ftp, s3, gs, and file. For file URLs, a host
-        is expected. A local file could be: file://localhost/path/to/table.csv.
+    sep : str, default ';'
+        Character used to separate fields in the CSV file.
 
-        If you want to pass in a path object, pandas accepts any
-        ``os.PathLike``.
-
-        By file-like object, we refer to objects with a ``read()`` method, such
-        as a file handle (e.g. via builtin ``open`` function) or ``StringIO``.
-    
-    preprocess : bool, default False
-        Indicates whether the preprocessing function should be applied to the
-        CMED data.
-
-    Returns:
+    Returns
     ---------
     DataFrame
         A Data Frame containing the data from the CMED file.
     """
 
-    # Load the .csv
     df_cmed = pd.read_csv(path, sep = sep)
 
-    # Adjust columns names
-    df_cmed.rename(str.lower, axis = 'columns', inplace = True)
-    df_cmed.rename(unidecode, axis = 'columns', inplace = True)
-    df_cmed.rename(columns = {'substancia': 'principio_ativo',
-                              'ean 1': 'ean_1',
-                              'ean 2': 'ean_2',
-                              'ean 3': 'ean_3'}, inplace = True)
     
     # Apply the preprocess function to the columns 'principio_ativo' and 'apresentacao'
     if preprocess:
         print("Preprocessing CMED")
 
         for idx, row in tqdm(df_cmed.iterrows()):
-            df_cmed.at[idx, 'principio_ativo'] = preprocessing_function(row['principio_ativo'], rem_nums = True, rem_stopwords_ai = True,
-                                                                        correct_ai = True, rem_rep_tokens = True)
+            df_cmed.at[idx, 'principio_ativo'] = preprocessing_function(row['principio_ativo'],
+                                                                        rem_nums = True,
+                                                                        rem_stopwords_ai = True,
+                                                                        correct_ai = True,
+                                                                        rem_rep_tokens = True)
             
-            df_cmed.at[idx, 'apresentacao'] = preprocessing_function(row['apresentacao'], rem_stopwords_pr = True)
+            df_cmed.at[idx, 'apresentacao'] = preprocessing_function(row['apresentacao'],
+                                                                     rem_stopwords_pr = True)
 
     return df_cmed
+
+def std_cols_names(df_cmed):
+    """
+    Standardizes column names: converts them to lowercase, removes accents, and
+    renames the 'substancia' and 'eans' columns.
+    
+    Parameters
+    ---------
+    df_cmed : DataFrame
+        A Data Frame containing the data from the CMED file.
+
+    Returns
+    ---------
+    DataFrame
+        A DataFrame with standardized column names.
+    """
+    new_df = df_cmed.copy()
+
+    new_df.rename(str.lower, axis = 'columns')
+    new_df.rename(unidecode, axis = 'columns')
+    new_df.rename(columns = {'substancia': 'principio_ativo',
+                              'ean 1': 'ean_1',
+                              'ean 2': 'ean_2',
+                              'ean 3': 'ean_3'})
+    
+    return new_df
+
 
 
 
 def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopwords_ai = False,
                            rem_stopwords_pr = False, abbreviate_prs = True, rem_rep_tokens = False):
+    """
+    preprocess : bool, default False
+        Indicates whether the preprocessing function should be applied to the
+        CMED data.
+    """
+
     text = text.lower()                   # Apply lowercase
     text = unidecode(text)                # Remove acentuacion
     text = re.sub('\W',' ', text)         # Removes specials characters and leaves only words
