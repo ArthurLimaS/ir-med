@@ -26,7 +26,7 @@ def template():
     return -1
 
 
-def load_cmed(path, preprocess = False):
+def load_cmed(path, sep=';', preprocess = False):
     """
     Load the CMED dataset from a file
     
@@ -51,11 +51,12 @@ def load_cmed(path, preprocess = False):
 
     Returns:
     ---------
-    {return_type}
-        {Return description}
+    DataFrame
+        A Data Frame containing the data from the CMED file.
     """
+
     # Load the .csv
-    df_cmed = pd.read_csv(path, sep = ";")
+    df_cmed = pd.read_csv(path, sep = sep)
 
     # Adjust columns names
     df_cmed.rename(str.lower, axis = 'columns', inplace = True)
