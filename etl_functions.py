@@ -47,58 +47,97 @@ def load_cmed(path, sep=';'):
 
     df_cmed = pd.read_csv(path, sep = sep)
 
-    
-    # Apply the preprocess function to the columns 'principio_ativo' and 'apresentacao'
-    if preprocess:
-        print("Preprocessing CMED")
-
-        for idx, row in tqdm(df_cmed.iterrows()):
-            df_cmed.at[idx, 'principio_ativo'] = preprocessing_function(row['principio_ativo'],
-                                                                        rem_nums = True,
-                                                                        rem_stopwords_ai = True,
-                                                                        correct_ai = True,
-                                                                        rem_rep_tokens = True)
-            
-            df_cmed.at[idx, 'apresentacao'] = preprocessing_function(row['apresentacao'],
-                                                                     rem_stopwords_pr = True)
-
     return df_cmed
 
-def std_cols_names(df_cmed):
+def std_cols_names(df_cmed, new_columns = {}):
     """
-    Standardizes column names: converts them to lowercase, removes accents, and
-    renames the 'substancia' and 'eans' columns.
+    Standardizes column names by converting them to lowercase and removing
+    accents. If a dictionary of new column names is provided, those columns are
+    renamed accordingly.
     
     Parameters
     ---------
     df_cmed : DataFrame
-        A Data Frame containing the data from the CMED file.
+        A DataFrame containing the data from the CMED file.
+
+    new_columns : dict, optional
+        A dictionary mapping existing column names (keys) to new column names
+        (values).
 
     Returns
     ---------
     DataFrame
-        A DataFrame with standardized column names.
+        A DataFrame with standardized and optionally renamed column names.
     """
+
+    # Copy the DataFrame
     new_df = df_cmed.copy()
 
+    # Turn to lowercase + remove accents
     new_df.rename(str.lower, axis = 'columns')
     new_df.rename(unidecode, axis = 'columns')
-    new_df.rename(columns = {'substancia': 'principio_ativo',
-                              'ean 1': 'ean_1',
-                              'ean 2': 'ean_2',
-                              'ean 3': 'ean_3'})
+
+    # Rename columns, if new names are provided
+    if new_columns:
+        new_df.rename(columns = new_columns)
     
     return new_df
 
-
-
-
-def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopwords_ai = False,
-                           rem_stopwords_pr = False, abbreviate_prs = True, rem_rep_tokens = False):
+def std_preprocessing(text, correct_ai = False, rem_nums = False,
+                      rem_stopwords_ai = False, rem_stopwords_pr = False,
+                      abbreviate_prs = True, rem_rep_tokens = False):
     """
-    preprocess : bool, default False
-        Indicates whether the preprocessing function should be applied to the
-        CMED data.
+    Applies a standard preprocessing pipeline to text from CMED and Public
+    Notices data.
+
+    The complete pipeline includes the following steps:
+    1. Convert text to lowercase.
+    2. Remove accentuation.
+    3. Remove special characters (i.e., characters not in the ranges a–z, A–Z, 0–9, including underscores).
+    4. Remove URLs starting with "http".
+    5. Remove URLs starting with "www".
+    6. Correct misspellings of pharmaceutical ingredients. [Optional, default: False]
+    7. Insert spaces between numbers and letters.
+    8. Remove numbers. [Optional, default: False]
+    9. Remove words that hinder the identification of pharmaceutical ingredients. [Optional, default: False]
+    10. Remove words that hinder the identification of pharmaceutical presentations. [Optional, default: False]
+    11. Abbreviate presentation terms based on the ANVISA vocabulary. [Optional, default: True]
+    12. Remove repeated words. [Optional, default: False]
+
+    Parameters
+    ----------
+    text : str
+        Text to be preprocessed.
+
+    correct_ai : bool, default False
+        Whether to correct misspellings of pharmaceutical ingredients. The
+        correction rules are defined in the ``CORRECTION`` dictionary.
+
+    rem_nums : bool, default False
+        Whether to remove numbers from the text.
+
+    rem_stopwords_ai : bool, default False
+        Whether to remove words that hinder the identification of pharmaceutical
+        active ingredients. These words are listed in the ``STOPWORDS_AI``
+        dictionary.
+
+    rem_stopwords_pr : bool, default False
+        Whether to remove words that hinder the identification of pharmaceutical
+        presentations. These words are listed in the ``STOPWORDS_PR``
+        dictionary.
+
+    abreviate_prs : bool, default True
+        Whether to abbreviate presentation-related terms based on the ANVISA
+        vocabulary. Abbreviations are defined in the ``ANVISA_ABBREVIATOR``
+        dictionary.
+
+    rem_rep_tokens : bool, default False
+        Whether to remove repeated tokens (duplicate words) from the text.
+
+    Returns
+    -------
+    str
+        The preprocessed text.
     """
 
     text = text.lower()                   # Apply lowercase
@@ -111,50 +150,50 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
 
     # Correct incorrect writing of pharmaceutical ingredients
     if correct_ai:
-        correcoes = {'acilovir': 'aciclovir',
-                     'amoxilina': 'amoxicilina',
-                     'benzoilmetronidazol': 'metronidazol',
-                     'cabidopa': 'carbidopa',
-                     'carvedilo': 'carvedilol',
-                     'cetamina': 'escetamina',
-                     'clonazepan': 'clonazepam',
-                     'deslanosido': 'deslanosideo',
-                     'dexamatesona': 'dexametasona',
-                     'dexametasoma': 'dexametasona',
-                     'dexclorfemiramina': 'dexclorfeniramina',
-                     'dexclofeniramina': 'dexclorfeniramina',
-                     'dextrocetamina': 'escetamina',
-                     'dimenitrato': 'dimenidrinato',
-                     'diporina': 'dipirona',
-                     'dolantina': 'petidina',
-                     'enoxoparina': 'enoxaparina',
-                     'espirolactona': 'espironolactona',
-                     'estrogeno': 'estrogenios',
-                     'estrogenos': 'estrogenios',
-                     'folinico': 'folico',
-                     'fomoterol': 'formoterol',
-                     'hidroclotiazida':'hidroclorotiazida',
-                     'hidrocortizona': 'hidrocortisona',
-                     'halpperidol': 'haloperidol',
-                     'kcl': 'potassio',
-                     'meloxican': 'meloxicam',
-                     'meropnem': 'meropenem',
-                     'metoclopamida': 'metoclopramida',
-                     'metroninazol': 'metronidazol',
-                     'midazolan': 'midazolam',
-                     'nacl': 'sodio',
-                     'ondasetrona': 'ondansetrona',
-                     'oxcarbamazepin': 'oxcarbazepina',
-                     'oxcarbamazepina': 'oxcarbazepina',
-                     'oxitocina': 'ocitocina',
-                     'piperaciclina': 'piperacilina',
-                     'subactant': 'sulbactam',
-                     'sulfametazol': 'sulfametoxazol',
-                     'tenoxican': 'tenoxicam',
-                     'trimetroprima': 'trimetoprima'}
+        CORRECTIONS = {'acilovir': 'aciclovir',
+                        'amoxilina': 'amoxicilina',
+                        'benzoilmetronidazol': 'metronidazol',
+                        'cabidopa': 'carbidopa',
+                        'carvedilo': 'carvedilol',
+                        'cetamina': 'escetamina',
+                        'clonazepan': 'clonazepam',
+                        'deslanosido': 'deslanosideo',
+                        'dexamatesona': 'dexametasona',
+                        'dexametasoma': 'dexametasona',
+                        'dexclorfemiramina': 'dexclorfeniramina',
+                        'dexclofeniramina': 'dexclorfeniramina',
+                        'dextrocetamina': 'escetamina',
+                        'dimenitrato': 'dimenidrinato',
+                        'diporina': 'dipirona',
+                        'dolantina': 'petidina',
+                        'enoxoparina': 'enoxaparina',
+                        'espirolactona': 'espironolactona',
+                        'estrogeno': 'estrogenios',
+                        'estrogenos': 'estrogenios',
+                        'folinico': 'folico',
+                        'fomoterol': 'formoterol',
+                        'hidroclotiazida':'hidroclorotiazida',
+                        'hidrocortizona': 'hidrocortisona',
+                        'halpperidol': 'haloperidol',
+                        'kcl': 'potassio',
+                        'meloxican': 'meloxicam',
+                        'meropnem': 'meropenem',
+                        'metoclopamida': 'metoclopramida',
+                        'metroninazol': 'metronidazol',
+                        'midazolan': 'midazolam',
+                        'nacl': 'sodio',
+                        'ondasetrona': 'ondansetrona',
+                        'oxcarbamazepin': 'oxcarbazepina',
+                        'oxcarbamazepina': 'oxcarbazepina',
+                        'oxitocina': 'ocitocina',
+                        'piperaciclina': 'piperacilina',
+                        'subactant': 'sulbactam',
+                        'sulfametazol': 'sulfametoxazol',
+                        'tenoxican': 'tenoxicam',
+                        'trimetroprima': 'trimetoprima'}
         
-        triggers = correcoes.keys()
-        tokens = [correcoes[tok] if tok in triggers else tok for tok in tokens]
+        triggers = CORRECTIONS.keys()
+        tokens = [CORRECTIONS[tok] if tok in triggers else tok for tok in tokens]
 
     # Insert blank space between numbers and words
     text = ""
@@ -172,9 +211,9 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
 
     tokens = word_tokenize(text)
 
-    # Remove words that hinder the identification of pharmaceutical ingredients
+    # Remove words that hinder the identification of pharmaceutical active ingredients
     if rem_stopwords_ai:
-        stopwords_ai = ['a', 'acetato', 'acido', 'anidra',
+        STOPWORDS_AI = ['a', 'acetato', 'acido', 'anidra',
                         'benzatina', 'besilato', 'bicarbonato', 'bidestilada','bissulfato', 'brometo', 'bromidrato', 'bultiprometo',
                         'c', 'calcica', 'carbonato', 'citrato', 'clavulanato', 'cloreto', 'cloridrato', 'com', 'complexo',
                         'd', 'da', 'de', 'di', 'dicloridrato', 'diidratada', 'diidratado', 'dihidratada', 'dihidratado', 'dipropionato', 'dinitrato',
@@ -195,16 +234,16 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
                         'v', 'valerato', 'valproato',
                         'zincica']
 
-        tokens = [tok for tok in tokens if tok not in stopwords_ai]
+        tokens = [tok for tok in tokens if tok not in STOPWORDS_AI]
 
     # Remove words that hinder the identification of presentations
     if rem_stopwords_pr:
-        stopwords_pr = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
-        tokens = [tok for tok in tokens if tok not in stopwords_pr]
+        STOPWORDS_PR = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
+        tokens = [tok for tok in tokens if tok not in STOPWORDS_PR]
 
-    # Abreviate presentation components based on the ANVISA vocabulary
+    # Abbreviate presentation components based on the ANVISA vocabulary
     if abbreviate_prs:
-        abreviator = {'adaptador': 'adapt',
+        ANVISA_ABBREVIATOR = {'adaptador': 'adapt',
                         'adesivo': 'ades',
                         'aerossol': 'aer',
                         'agulha': 'agu',
@@ -340,11 +379,11 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
                         'vidro': 'vd',
                         'xampu': 'xamp',
                         'xarope': 'xpe'}
-        forms = abreviator.keys()
+        forms = ANVISA_ABBREVIATOR.keys()
 
-        tokens = [abreviator[tok] if tok in forms else tok for tok in tokens]
+        tokens = [ANVISA_ABBREVIATOR[tok] if tok in forms else tok for tok in tokens]
 
-    # Removal of repeared words
+    # Removal of repeated words
     if rem_rep_tokens:
         indexes = np.unique(tokens, return_index=True)[1]
         tokens = [tokens[index] for index in sorted(indexes)]
@@ -452,14 +491,3 @@ def load_notice(path, drop_columns, desc_column, und_column, sep = ';', decimal 
     df_le['cmed_indexes'] = ""
 
     return df_le
-
-
-
-
-
-
-
-
-
-
-
