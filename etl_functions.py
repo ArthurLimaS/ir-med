@@ -49,37 +49,30 @@ def load_cmed(path, sep=';'):
 
     return df_cmed
 
-def std_cols_names(df_cmed, new_columns = {}):
+def std_cols_names(df_cmed):
     """
-    Standardizes column names by converting them to lowercase and removing
-    accents. If a dictionary of new column names is provided, those columns are
-    renamed accordingly.
-    
+    Standardizes column names by converting them to lowercase, removing
+    accents, and replacing spaces with underscores.
+
     Parameters
-    ---------
+    ----------
     df_cmed : DataFrame
         A DataFrame containing the data from the CMED file.
 
-    new_columns : dict, optional
-        A dictionary mapping existing column names (keys) to new column names
-        (values).
-
     Returns
-    ---------
+    -------
     DataFrame
-        A DataFrame with standardized and optionally renamed column names.
+        A DataFrame with standardized column names.
     """
 
     # Copy the DataFrame
     new_df = df_cmed.copy()
 
-    # Turn to lowercase + remove accents
-    new_df.rename(str.lower, axis = 'columns')
-    new_df.rename(unidecode, axis = 'columns')
-
-    # Rename columns, if new names are provided
-    if new_columns:
-        new_df.rename(columns = new_columns)
+    # Turn to lowercase + remove accents + change blank spaces for "_"
+    new_df.rename(str.lower, axis = 'columns', inplace = True)
+    new_df.rename(unidecode, axis = 'columns', inplace = True)
+    new_df.rename(lambda x : x.replace(' ', "_"), axis = 'columns',
+                  inplace = True)
     
     return new_df
 
