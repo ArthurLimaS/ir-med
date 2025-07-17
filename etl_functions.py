@@ -6,29 +6,9 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 from unidecode import unidecode
 
-def template():
-    """
-    Breve descrição da função
-    
-    Parameters:
-    ---------
-    {parameter_name} : {parameter_type}[, default ?]
-        {Parameter description}
-
-    {parameter_name} : {parameter_type}[, default ?]
-        {Parameter description}
-
-    Returns:
-    ---------
-    {return_type}
-        {Return description}
-    """
-    return -1
-
-
 def load_cmed(path, sep=';'):
     """
-    Load the CMED dataset from a file
+    Load the CMED dataset from a .csv file
     
     Parameters
     ---------
@@ -42,7 +22,7 @@ def load_cmed(path, sep=';'):
     Returns
     ---------
     DataFrame
-        A Data Frame containing the data from the CMED file.
+        A DataFrame containing the data from the CMED file.
     """
 
     df_cmed = pd.read_csv(path, sep = sep)
@@ -496,31 +476,29 @@ def sort_alphabetically(text):
     
     return text
 
+def load_notice(path, sep = ';', decimal = ','):
+    """
+    Load the Public Notice data from a CSV file.
 
+    Parameters
+    ----------
+    path : str, path object, or file-like object
+        Path to a CSV file containing the Public Notice data. Can be a string,
+        a PathLike object, or a file-like object with a ``read()`` method.
 
-# Load the .csv with the data extracted from a public notice
-def load_notice(path, drop_columns, desc_column, und_column, sep = ';', decimal = ',', preprocess = False):
+    sep : str, default ';'
+        Character used to separate fields in the CSV file.
+
+    decimal : str, default ','
+        Character used as the decimal point in numeric values.
+
+    Returns
+    -------
+    DataFrame
+        A DataFrame containing the data from the Public Notice file.
+    """
     
     # Load the .csv
     df_le = pd.read_csv(path, sep = sep, decimal = decimal)
-
-    # Adjust columns names
-    df_le.drop(columns = drop_columns, inplace = True)
-    df_le.rename(str.lower, axis='columns', inplace = True)
-    df_le.rename(unidecode, axis='columns', inplace = True)
-    df_le['original_desc'] = df_le[df_le.columns[desc_column]]
-
-    # Apply the preprocess function to the columns 'descrição' and 'unidade'
-    if preprocess:
-        print("Pré-processamento do edital")
-        for idx, row in tqdm(df_le.iterrows()):
-            df_le.at[idx, 'original_desc'] = re.sub('\n', '', row['original_desc'])
-
-            df_le.at[idx, df_le.columns[desc_column]] = preprocessing_function(row[desc_column], correct_ai = True, rem_rep_tokens = True)
-            
-            df_le.at[idx, df_le.columns[und_column]] = preprocessing_function(row[und_column], rem_stopwords_pr = True)
-            
-    # Creation of the column where the indices of the CMED will be stored
-    df_le['cmed_indexes'] = ""
 
     return df_le
