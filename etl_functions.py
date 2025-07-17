@@ -474,10 +474,20 @@ def grouped_cmed(df_cmed, ai_column, verbose = False):
 
     return df_grouped_cmed.sort_values(by=['key']).reset_index(drop = True)
 
-
-
-# Returns a string with its words in alphabetical order
 def sort_alphabetically(text):
+    """
+    Returns a string with its words sorted in alphabetical order.
+
+    Parameters
+    ----------
+    text : str
+        Input string whose words will be sorted alphabetically.
+
+    Returns
+    -------
+    str
+        A string with the same words, reordered alphabetically.
+    """
     tokens = word_tokenize(text)
 
     if len(tokens) > 1:
