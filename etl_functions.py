@@ -385,23 +385,48 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
 
     return text
 
+def grouped_cmed(df_cmed, ai_column, verbose = False):
+    """
+    Creates a dictionary-like DataFrame where the "keys" are pharmaceutical
+    active ingredients and the "values" are the indices of CMED rows that
+    contain each ingredient. The resulting DataFrame also includes a third
+    column with the keys sorted alphabetically.
 
-# Creates a dict like DataFrame where the "keys" are the pharmaceutical ingredients
-# and the "values" are the indexes of CMED rows that have that ingredient
-def grouped_cmed(df_cmed):
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
 
-    # Create a list with all the distinct pharmaceutical ingredients    
-    ais = np.unique(df_cmed['principio_ativo'])
+    ai_column : str
+        Name of the column that contains pharmaceutical active ingredient
+        information.
+
+    verbose : bool, default False
+        Whether to display progress information during processing.
+
+    Returns
+    -------
+    DataFrame
+        A DataFrame where each row represents a pharmaceutical ingredient, its
+        associated row indices from the original CMED data, and the ingredient
+        name sorted alphabetically.
+    """
+    # Create a list with all the distinct pharmaceutical active ingredients    
+    ais = np.unique(df_cmed[ai_column])
     
     ### Creation of the DataFrame
     keys = []
     keys_sorted = []
     indexes = []
 
-    print("Creation of the grouped-cmed DataFrame")
-    for key in tqdm(ais):
+    if verbose:
+        print("Creation of the grouped-cmed DataFrame")
+        ais = tqdm(ais)
+
+
+    for key in ais:
         # Find the rows of CMED that have the pharmaceutical ingredient stored in key
-        indexes_found = df_cmed.index[df_cmed['principio_ativo'] == key].values
+        indexes_found = df_cmed.index[df_cmed[ai_column] == key].values
 
         keys.append(key)
         keys_sorted.append(sort_alphabetically(key))
@@ -421,8 +446,12 @@ def grouped_cmed(df_cmed):
     keys_sorted = []
     indexes = []
 
-    print("Dealing with duplicated pharmaceutical ingredients")
-    for ksort in tqdm(np.unique(duplicated['key_sorted'])):
+    ais_sorted = np.unique(duplicated['key_sorted'])
+    if verbose:
+        print("Dealing with duplicated pharmaceutical active ingredients")
+        ais_sorted = tqdm(ais_sorted)
+
+    for ksort in ais_sorted:
         subset = duplicated[duplicated['key_sorted'] == ksort].reset_index(drop = True)
 
         keys.append(subset['key'][0])
@@ -438,6 +467,7 @@ def grouped_cmed(df_cmed):
     data = {'key': keys,
             'key_sorted': keys_sorted,
             'indexes': indexes}
+
     new_lines = pd.DataFrame(data).sort_values(by='key_sorted')
     df_grouped_cmed.drop_duplicates(subset=['key_sorted'], keep = False, inplace = True)
     df_grouped_cmed = pd.concat([df_grouped_cmed, new_lines], ignore_index = True)
