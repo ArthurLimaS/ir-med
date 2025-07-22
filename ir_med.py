@@ -63,8 +63,33 @@ def extract_relevant_words(df_cmed, columns, verbose = False):
 
     return answer_dict
 
-# Extracts from the column 'desc' of a notice the words that appear in the CMED report
 def sep_desc(desc, cmed_ai_words, cmed_pr_words):
+    """
+    Extracts words from a notice description that match entries in the CMED
+    report.
+
+    Parameters
+    ----------
+    desc : str
+        Description of a medicine from the public notice.
+
+    cmed_ai_words : list of str
+        List of words representing active ingredients from the CMED report.
+
+    cmed_pr_words : list of str
+        List of words representing pharmaceutical presentations from the CMED
+        report.
+
+    Returns
+    -------
+    tuple of str
+        A tuple containing two strings:
+        - The first string includes words from the description that match active
+          ingredient terms.
+        - The second string includes words that match pharmaceutical
+          presentation terms.
+    """
+
     desc_ai = ""
     desc_pr = ""
 
@@ -75,12 +100,43 @@ def sep_desc(desc, cmed_ai_words, cmed_pr_words):
         if tok in cmed_pr_words:
             desc_pr += tok + " "
         
-    return desc_ai, desc_pr
+    return (desc_ai, desc_pr)
 
-
-
-# Macro function that runs the medicine identification process
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
+    """
+    Runs the complete medicine identification process based on a public notice description.
+
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the original CMED data.
+
+    grouped_cmed : DataFrame
+        DataFrame containing grouped CMED data, with a 'key' column for active
+        ingredients and a 'key_sorted' column for alphabetically sorted ingredients.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public notice.
+
+    und : str
+        Unit description from the 'unidade' column in the notice data.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list of int: Indices of the best matching presentations in the CMED data.
+        - dict: Metadata about the identification process, including:
+            - 'desc_ai': Active ingredient description used for matching.
+            - 'desc_pr': Pharmaceutical presentation description used for matching.
+            - 'active_ingredient_found': The active ingredient that was matched.
+            - 'quant_presentations_matched': Number of matching presentations.
+            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
+            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
+    """
 
     # Classification of the active_ingredient
     active_ingredient, _ = match_ai(grouped_cmed, desc_ai)
