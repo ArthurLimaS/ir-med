@@ -214,8 +214,16 @@ def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
 
     Returns:
     ---------
-    {return_type}
-        {Return description}
+    tuple
+        A tuple containing:
+        - list of int: Indices of the best matching presentations in the CMED data.
+        - dict: Metadata about the identification process, including:
+            - 'desc_ai': Active ingredient description used for matching.
+            - 'desc_pr': Pharmaceutical presentation description used for matching.
+            - 'active_ingredient_found': The active ingredient that was matched.
+            - 'quant_presentations_matched': Number of matching presentations.
+            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
+            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
     """
 
     sets = get_sets_from_desc_pr(desc_pr)
@@ -271,9 +279,22 @@ def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
 
     return (best_matchs, process_metadata)
 
-
-
 def get_sets_from_desc_pr(desc_pr):
+    """
+    Generates all possible sets of words from a given description.
+
+    Parameters
+    ----------
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public
+        notice.
+
+    Returns
+    -------
+    list of list of str
+        A list containing all possible combinations of words extracted from the
+        description.
+    """
     tokens = word_tokenize(desc_pr)
     n_tokens = len(tokens)
 
