@@ -104,22 +104,23 @@ def sep_desc(desc, cmed_ai_words, cmed_pr_words):
 
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     """
-    Runs the complete medicine identification process based on a public notice description.
+    Runs the complete medicine identification process based on a public notice
+    description.
 
     Parameters
     ----------
     df_cmed : DataFrame
-        DataFrame containing the original CMED data.
+        DataFrame containing the CMED data.
 
     grouped_cmed : DataFrame
-        DataFrame containing grouped CMED data, with a 'key' column for active
-        ingredients and a 'key_sorted' column for alphabetically sorted ingredients.
+        DataFrame containing grouped CMED data.
 
     desc_ai : str
         Description related to the active ingredient from the public notice.
 
     desc_pr : str
-        Description related to the pharmaceutical presentation from the public notice.
+        Description related to the pharmaceutical presentation from the public
+        notice.
 
     und : str
         Unit description from the 'unidade' column in the notice data.
@@ -147,9 +148,29 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     return filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient)
 
 
-
-# Function that predicits the pharmaceutical ingredient
 def match_ai(grouped_cmed, desc_ai):
+    """
+    Predicts the most likely pharmaceutical active ingredient based on a given
+    description.
+
+    Parameters
+    ----------
+    grouped_cmed : DataFrame
+        DataFrame containing grouped CMED data.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - str: The best matching active ingredient key.
+        - dict: Metadata about the matching process, including:
+            - 'desc_ai': The description used for matching.
+            - 'similarity_value': Similarity score of the best match.
+    """
+
     desc_ai = etl.sort_alphabetically(desc_ai)
     best_match = -1
     best_match_key = ""
