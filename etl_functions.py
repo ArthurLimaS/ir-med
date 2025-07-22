@@ -47,10 +47,10 @@ def std_cols_names(df_cmed):
     new_df = df_cmed.copy()
 
     # Turn to lowercase + remove accents + change blank spaces for "_"
-    new_df.rename(str.lower, axis = 'columns', inplace = True)
-    new_df.rename(unidecode, axis = 'columns', inplace = True)
-    new_df.rename(lambda x : x.replace(' ', "_"), axis = 'columns',
-                  inplace = True)
+    new_df.columns = [
+        unidecode(col.lower()).replace(' ', '_')
+        for col in new_df.columns
+    ]
     
     return new_df
 
