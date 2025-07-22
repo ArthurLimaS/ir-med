@@ -25,9 +25,7 @@ def load_cmed(path, sep=';'):
         A DataFrame containing the data from the CMED file.
     """
 
-    df_cmed = pd.read_csv(path, sep = sep)
-
-    return df_cmed
+    return pd.read_csv(path, sep = sep)
 
 def std_cols_names(df_cmed):
     """
