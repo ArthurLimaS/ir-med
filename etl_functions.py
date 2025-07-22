@@ -111,11 +111,12 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
         The preprocessed text.
     """
 
-    text = text.lower()                   # Apply lowercase
-    text = unidecode(text)                # Remove acentuacion
+    # Lowercase and remove accents
+    text = unidecode(text.lower())
+    # Remove URLs
+    text = re.sub(r'http\S+|www\S+', '', text)
+    # Remove special characters (keep only words and numbers)
     text = re.sub('\W',' ', text)         # Removes specials characters and leaves only words
-    text = re.sub(r'http\S+', '', text)   # Removes URLs with http
-    text = re.sub(r'www\S+', '', text)    # Removes URLs with www
 
     tokens = word_tokenize(text)
 
@@ -163,24 +164,20 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
                         'tenoxican': 'tenoxicam',
                         'trimetroprima': 'trimetoprima'}
         
-        triggers = CORRECTIONS.keys()
-        tokens = [CORRECTIONS[tok] if tok in triggers else tok for tok in tokens]
+        tokens = [CORRECTIONS.get(tok, tok) for tok in tokens]
 
     # Insert blank space between numbers and words
-    text = ""
+    new_tokens = []
     for tok in tokens:
-        match = re.split(r'(\d+)', tok)
-        if (len(match) > 1):
-            for m in match:
-                text += m + " "
-        else:
-            text += tok + " "
+        # Split tokens into words and numbers
+        split_tok = re.findall(r'[A-Za-z]+|\d+', tok)
+
+        new_tokens.extend(split_tok)
+    tokens = new_tokens
 
     # Remove numbers
     if rem_nums:
-        text = re.sub('\d', ' ', text)
-
-    tokens = word_tokenize(text)
+        tokens = [tok for tok in tokens if not tok.isdigit()]
 
     # Remove words that hinder the identification of pharmaceutical active ingredients
     if rem_stopwords_ai:
@@ -210,6 +207,7 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
     # Remove words that hinder the identification of presentations
     if rem_stopwords_pr:
         STOPWORDS_PR = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
+        
         tokens = [tok for tok in tokens if tok not in STOPWORDS_PR]
 
     # Abbreviate presentation components based on the ANVISA vocabulary
@@ -350,18 +348,24 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
                         'vidro': 'vd',
                         'xampu': 'xamp',
                         'xarope': 'xpe'}
-        forms = ANVISA_ABBREVIATOR.keys()
-
-        tokens = [ANVISA_ABBREVIATOR[tok] if tok in forms else tok for tok in tokens]
+        
+        tokens = [ANVISA_ABBREVIATOR.get(tok, tok) for tok in tokens]
 
     # Removal of repeated words
     if rem_rep_tokens:
-        indexes = np.unique(tokens, return_index=True)[1]
-        tokens = [tokens[index] for index in sorted(indexes)]
+        seen = set()
 
-    text = " ".join(tokens)
+        filtered_tokens = []
+        for x in tokens:
+            if x in seen:
+                continue
 
-    return text
+            seen.add(x)
+            filtered_tokens.append(x)
+
+        tokens = filtered_tokens
+
+    return " ".join(tokens)
 
 def grouped_cmed(df_cmed, ai_column, verbose = False):
     """
