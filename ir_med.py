@@ -147,7 +147,6 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     
     return filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient)
 
-
 def match_ai(grouped_cmed, desc_ai):
     """
     Predicts the most likely pharmaceutical active ingredient based on a given
@@ -190,10 +189,34 @@ def match_ai(grouped_cmed, desc_ai):
 
     return (best_match_key, process_metadata)
 
-
-
-# Function that returns the presentations that have the most intersection with desc_pr
 def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
+    """
+    Function that returns the presentations that have the most intersection with
+    desc_pr
+    
+    Parameters:
+    ---------
+    df_cmed_filtered : DataFrame
+        DataFrame containing the filtered CMED data based on the active ingredient.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+    
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public
+        notice.
+    
+    und : str
+        Unit description from the 'unidade' column in the notice data.
+    
+    active_ingredient : str
+        The active ingredient that was matched from the CMED data.
+
+    Returns:
+    ---------
+    {return_type}
+        {Return description}
+    """
 
     sets = get_sets_from_desc_pr(desc_pr)
     und_sets = get_sets_from_desc_pr(und)
