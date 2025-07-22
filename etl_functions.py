@@ -6,38 +6,113 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 from unidecode import unidecode
 
-
-
-
-# Load the CMED dataset from a file
-def load_cmed(path, preprocess = False):
-    # Load the .csv
-    df_cmed = pd.read_csv(path, sep = ";")
-
-    # Adjust columns names
-    df_cmed.rename(str.lower, axis = 'columns', inplace = True)
-    df_cmed.rename(unidecode, axis = 'columns', inplace = True)
-    df_cmed.rename(columns = {'substancia': 'principio_ativo',
-                              'ean 1': 'ean_1',
-                              'ean 2': 'ean_2',
-                              'ean 3': 'ean_3'}, inplace = True)
+def load_cmed(path, sep=';'):
+    """
+    Load the CMED dataset from a .csv file
     
-    # Apply the preprocess function to the columns 'principio_ativo' and 'apresentacao'
-    if preprocess:
-        print("Preprocessing CMED")
+    Parameters
+    ---------
+    path : str, path object or file-like object
+        Path to a CSV file containing the CMED table. Can be a string, a
+        PathLike object, or a file-like object with a ``read()`` method.
 
-        for idx, row in tqdm(df_cmed.iterrows()):
-            df_cmed.at[idx, 'principio_ativo'] = preprocessing_function(row['principio_ativo'], rem_nums = True, rem_stopwords_ai = True,
-                                                                        correct_ai = True, rem_rep_tokens = True)
-            
-            df_cmed.at[idx, 'apresentacao'] = preprocessing_function(row['apresentacao'], rem_stopwords_pr = True)
+    sep : str, default ';'
+        Character used to separate fields in the CSV file.
+
+    Returns
+    ---------
+    DataFrame
+        A DataFrame containing the data from the CMED file.
+    """
+
+    df_cmed = pd.read_csv(path, sep = sep)
 
     return df_cmed
 
+def std_cols_names(df_cmed):
+    """
+    Standardizes column names by converting them to lowercase, removing
+    accents, and replacing spaces with underscores.
 
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        A DataFrame containing the data from the CMED file.
 
-def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopwords_ai = False,
-                           rem_stopwords_pr = False, abbreviate_prs = True, rem_rep_tokens = False):
+    Returns
+    -------
+    DataFrame
+        A DataFrame with standardized column names.
+    """
+
+    # Copy the DataFrame
+    new_df = df_cmed.copy()
+
+    # Turn to lowercase + remove accents + change blank spaces for "_"
+    new_df.rename(str.lower, axis = 'columns', inplace = True)
+    new_df.rename(unidecode, axis = 'columns', inplace = True)
+    new_df.rename(lambda x : x.replace(' ', "_"), axis = 'columns',
+                  inplace = True)
+    
+    return new_df
+
+def std_preprocessing(text, correct_ai = False, rem_nums = False,
+                      rem_stopwords_ai = False, rem_stopwords_pr = False,
+                      abbreviate_prs = True, rem_rep_tokens = False):
+    """
+    Applies a standard preprocessing pipeline to text from CMED and Public
+    Notices data.
+
+    The complete pipeline includes the following steps:
+    1. Convert text to lowercase.
+    2. Remove accentuation.
+    3. Remove special characters (i.e., characters not in the ranges a–z, A–Z, 0–9, including underscores).
+    4. Remove URLs starting with "http".
+    5. Remove URLs starting with "www".
+    6. Correct misspellings of pharmaceutical ingredients. [Optional, default: False]
+    7. Insert spaces between numbers and letters.
+    8. Remove numbers. [Optional, default: False]
+    9. Remove words that hinder the identification of pharmaceutical ingredients. [Optional, default: False]
+    10. Remove words that hinder the identification of pharmaceutical presentations. [Optional, default: False]
+    11. Abbreviate presentation terms based on the ANVISA vocabulary. [Optional, default: True]
+    12. Remove repeated words. [Optional, default: False]
+
+    Parameters
+    ----------
+    text : str
+        Text to be preprocessed.
+
+    correct_ai : bool, default False
+        Whether to correct misspellings of pharmaceutical ingredients. The
+        correction rules are defined in the ``CORRECTION`` dictionary.
+
+    rem_nums : bool, default False
+        Whether to remove numbers from the text.
+
+    rem_stopwords_ai : bool, default False
+        Whether to remove words that hinder the identification of pharmaceutical
+        active ingredients. These words are listed in the ``STOPWORDS_AI``
+        dictionary.
+
+    rem_stopwords_pr : bool, default False
+        Whether to remove words that hinder the identification of pharmaceutical
+        presentations. These words are listed in the ``STOPWORDS_PR``
+        dictionary.
+
+    abreviate_prs : bool, default True
+        Whether to abbreviate presentation-related terms based on the ANVISA
+        vocabulary. Abbreviations are defined in the ``ANVISA_ABBREVIATOR``
+        dictionary.
+
+    rem_rep_tokens : bool, default False
+        Whether to remove repeated tokens (duplicate words) from the text.
+
+    Returns
+    -------
+    str
+        The preprocessed text.
+    """
+
     text = text.lower()                   # Apply lowercase
     text = unidecode(text)                # Remove acentuacion
     text = re.sub('\W',' ', text)         # Removes specials characters and leaves only words
@@ -48,50 +123,50 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
 
     # Correct incorrect writing of pharmaceutical ingredients
     if correct_ai:
-        correcoes = {'acilovir': 'aciclovir',
-                     'amoxilina': 'amoxicilina',
-                     'benzoilmetronidazol': 'metronidazol',
-                     'cabidopa': 'carbidopa',
-                     'carvedilo': 'carvedilol',
-                     'cetamina': 'escetamina',
-                     'clonazepan': 'clonazepam',
-                     'deslanosido': 'deslanosideo',
-                     'dexamatesona': 'dexametasona',
-                     'dexametasoma': 'dexametasona',
-                     'dexclorfemiramina': 'dexclorfeniramina',
-                     'dexclofeniramina': 'dexclorfeniramina',
-                     'dextrocetamina': 'escetamina',
-                     'dimenitrato': 'dimenidrinato',
-                     'diporina': 'dipirona',
-                     'dolantina': 'petidina',
-                     'enoxoparina': 'enoxaparina',
-                     'espirolactona': 'espironolactona',
-                     'estrogeno': 'estrogenios',
-                     'estrogenos': 'estrogenios',
-                     'folinico': 'folico',
-                     'fomoterol': 'formoterol',
-                     'hidroclotiazida':'hidroclorotiazida',
-                     'hidrocortizona': 'hidrocortisona',
-                     'halpperidol': 'haloperidol',
-                     'kcl': 'potassio',
-                     'meloxican': 'meloxicam',
-                     'meropnem': 'meropenem',
-                     'metoclopamida': 'metoclopramida',
-                     'metroninazol': 'metronidazol',
-                     'midazolan': 'midazolam',
-                     'nacl': 'sodio',
-                     'ondasetrona': 'ondansetrona',
-                     'oxcarbamazepin': 'oxcarbazepina',
-                     'oxcarbamazepina': 'oxcarbazepina',
-                     'oxitocina': 'ocitocina',
-                     'piperaciclina': 'piperacilina',
-                     'subactant': 'sulbactam',
-                     'sulfametazol': 'sulfametoxazol',
-                     'tenoxican': 'tenoxicam',
-                     'trimetroprima': 'trimetoprima'}
+        CORRECTIONS = {'acilovir': 'aciclovir',
+                        'amoxilina': 'amoxicilina',
+                        'benzoilmetronidazol': 'metronidazol',
+                        'cabidopa': 'carbidopa',
+                        'carvedilo': 'carvedilol',
+                        'cetamina': 'escetamina',
+                        'clonazepan': 'clonazepam',
+                        'deslanosido': 'deslanosideo',
+                        'dexamatesona': 'dexametasona',
+                        'dexametasoma': 'dexametasona',
+                        'dexclorfemiramina': 'dexclorfeniramina',
+                        'dexclofeniramina': 'dexclorfeniramina',
+                        'dextrocetamina': 'escetamina',
+                        'dimenitrato': 'dimenidrinato',
+                        'diporina': 'dipirona',
+                        'dolantina': 'petidina',
+                        'enoxoparina': 'enoxaparina',
+                        'espirolactona': 'espironolactona',
+                        'estrogeno': 'estrogenios',
+                        'estrogenos': 'estrogenios',
+                        'folinico': 'folico',
+                        'fomoterol': 'formoterol',
+                        'hidroclotiazida':'hidroclorotiazida',
+                        'hidrocortizona': 'hidrocortisona',
+                        'halpperidol': 'haloperidol',
+                        'kcl': 'potassio',
+                        'meloxican': 'meloxicam',
+                        'meropnem': 'meropenem',
+                        'metoclopamida': 'metoclopramida',
+                        'metroninazol': 'metronidazol',
+                        'midazolan': 'midazolam',
+                        'nacl': 'sodio',
+                        'ondasetrona': 'ondansetrona',
+                        'oxcarbamazepin': 'oxcarbazepina',
+                        'oxcarbamazepina': 'oxcarbazepina',
+                        'oxitocina': 'ocitocina',
+                        'piperaciclina': 'piperacilina',
+                        'subactant': 'sulbactam',
+                        'sulfametazol': 'sulfametoxazol',
+                        'tenoxican': 'tenoxicam',
+                        'trimetroprima': 'trimetoprima'}
         
-        triggers = correcoes.keys()
-        tokens = [correcoes[tok] if tok in triggers else tok for tok in tokens]
+        triggers = CORRECTIONS.keys()
+        tokens = [CORRECTIONS[tok] if tok in triggers else tok for tok in tokens]
 
     # Insert blank space between numbers and words
     text = ""
@@ -109,9 +184,9 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
 
     tokens = word_tokenize(text)
 
-    # Remove words that hinder the identification of pharmaceutical ingredients
+    # Remove words that hinder the identification of pharmaceutical active ingredients
     if rem_stopwords_ai:
-        stopwords_ai = ['a', 'acetato', 'acido', 'anidra',
+        STOPWORDS_AI = ['a', 'acetato', 'acido', 'anidra',
                         'benzatina', 'besilato', 'bicarbonato', 'bidestilada','bissulfato', 'brometo', 'bromidrato', 'bultiprometo',
                         'c', 'calcica', 'carbonato', 'citrato', 'clavulanato', 'cloreto', 'cloridrato', 'com', 'complexo',
                         'd', 'da', 'de', 'di', 'dicloridrato', 'diidratada', 'diidratado', 'dihidratada', 'dihidratado', 'dipropionato', 'dinitrato',
@@ -132,16 +207,16 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
                         'v', 'valerato', 'valproato',
                         'zincica']
 
-        tokens = [tok for tok in tokens if tok not in stopwords_ai]
+        tokens = [tok for tok in tokens if tok not in STOPWORDS_AI]
 
     # Remove words that hinder the identification of presentations
     if rem_stopwords_pr:
-        stopwords_pr = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
-        tokens = [tok for tok in tokens if tok not in stopwords_pr]
+        STOPWORDS_PR = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
+        tokens = [tok for tok in tokens if tok not in STOPWORDS_PR]
 
-    # Abreviate presentation components based on the ANVISA vocabulary
+    # Abbreviate presentation components based on the ANVISA vocabulary
     if abbreviate_prs:
-        abreviator = {'adaptador': 'adapt',
+        ANVISA_ABBREVIATOR = {'adaptador': 'adapt',
                         'adesivo': 'ades',
                         'aerossol': 'aer',
                         'agulha': 'agu',
@@ -277,11 +352,11 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
                         'vidro': 'vd',
                         'xampu': 'xamp',
                         'xarope': 'xpe'}
-        forms = abreviator.keys()
+        forms = ANVISA_ABBREVIATOR.keys()
 
-        tokens = [abreviator[tok] if tok in forms else tok for tok in tokens]
+        tokens = [ANVISA_ABBREVIATOR[tok] if tok in forms else tok for tok in tokens]
 
-    # Removal of repeared words
+    # Removal of repeated words
     if rem_rep_tokens:
         indexes = np.unique(tokens, return_index=True)[1]
         tokens = [tokens[index] for index in sorted(indexes)]
@@ -290,23 +365,48 @@ def preprocessing_function(text, correct_ai = False, rem_nums = False, rem_stopw
 
     return text
 
+def grouped_cmed(df_cmed, ai_column, verbose = False):
+    """
+    Creates a dictionary-like DataFrame where the "keys" are pharmaceutical
+    active ingredients and the "values" are the indices of CMED rows that
+    contain each ingredient. The resulting DataFrame also includes a third
+    column with the keys sorted alphabetically.
 
-# Creates a dict like DataFrame where the "keys" are the pharmaceutical ingredients
-# and the "values" are the indexes of CMED rows that have that ingredient
-def grouped_cmed(df_cmed):
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
 
-    # Create a list with all the distinct pharmaceutical ingredients    
-    ais = np.unique(df_cmed['principio_ativo'])
+    ai_column : str
+        Name of the column that contains pharmaceutical active ingredient
+        information.
+
+    verbose : bool, default False
+        Whether to display progress information during processing.
+
+    Returns
+    -------
+    DataFrame
+        A DataFrame where each row represents a pharmaceutical ingredient, its
+        associated row indices from the original CMED data, and the ingredient
+        name sorted alphabetically.
+    """
+    # Create a list with all the distinct pharmaceutical active ingredients    
+    ais = np.unique(df_cmed[ai_column])
     
     ### Creation of the DataFrame
     keys = []
     keys_sorted = []
     indexes = []
 
-    print("Creation of the grouped-cmed DataFrame")
-    for key in tqdm(ais):
+    if verbose:
+        print("Creation of the grouped-cmed DataFrame")
+        ais = tqdm(ais)
+
+
+    for key in ais:
         # Find the rows of CMED that have the pharmaceutical ingredient stored in key
-        indexes_found = df_cmed.index[df_cmed['principio_ativo'] == key].values
+        indexes_found = df_cmed.index[df_cmed[ai_column] == key].values
 
         keys.append(key)
         keys_sorted.append(sort_alphabetically(key))
@@ -326,8 +426,12 @@ def grouped_cmed(df_cmed):
     keys_sorted = []
     indexes = []
 
-    print("Dealing with duplicated pharmaceutical ingredients")
-    for ksort in tqdm(np.unique(duplicated['key_sorted'])):
+    ais_sorted = np.unique(duplicated['key_sorted'])
+    if verbose:
+        print("Dealing with duplicated pharmaceutical active ingredients")
+        ais_sorted = tqdm(ais_sorted)
+
+    for ksort in ais_sorted:
         subset = duplicated[duplicated['key_sorted'] == ksort].reset_index(drop = True)
 
         keys.append(subset['key'][0])
@@ -343,16 +447,27 @@ def grouped_cmed(df_cmed):
     data = {'key': keys,
             'key_sorted': keys_sorted,
             'indexes': indexes}
+
     new_lines = pd.DataFrame(data).sort_values(by='key_sorted')
     df_grouped_cmed.drop_duplicates(subset=['key_sorted'], keep = False, inplace = True)
     df_grouped_cmed = pd.concat([df_grouped_cmed, new_lines], ignore_index = True)
 
     return df_grouped_cmed.sort_values(by=['key']).reset_index(drop = True)
 
-
-
-# Returns a string with its words in alphabetical order
 def sort_alphabetically(text):
+    """
+    Returns a string with its words sorted in alphabetical order.
+
+    Parameters
+    ----------
+    text : str
+        Input string whose words will be sorted alphabetically.
+
+    Returns
+    -------
+    str
+        A string with the same words, reordered alphabetically.
+    """
     tokens = word_tokenize(text)
 
     if len(tokens) > 1:
@@ -361,42 +476,29 @@ def sort_alphabetically(text):
     
     return text
 
+def load_notice(path, sep = ';', decimal = ','):
+    """
+    Load the Public Notice data from a CSV file.
 
+    Parameters
+    ----------
+    path : str, path object, or file-like object
+        Path to a CSV file containing the Public Notice data. Can be a string,
+        a PathLike object, or a file-like object with a ``read()`` method.
 
-# Load the .csv with the data extracted from a public notice
-def load_notice(path, drop_columns, desc_column, und_column, sep = ';', decimal = ',', preprocess = False):
+    sep : str, default ';'
+        Character used to separate fields in the CSV file.
+
+    decimal : str, default ','
+        Character used as the decimal point in numeric values.
+
+    Returns
+    -------
+    DataFrame
+        A DataFrame containing the data from the Public Notice file.
+    """
     
     # Load the .csv
     df_le = pd.read_csv(path, sep = sep, decimal = decimal)
 
-    # Adjust columns names
-    df_le.drop(columns = drop_columns, inplace = True)
-    df_le.rename(str.lower, axis='columns', inplace = True)
-    df_le.rename(unidecode, axis='columns', inplace = True)
-    df_le['original_desc'] = df_le[df_le.columns[desc_column]]
-
-    # Apply the preprocess function to the columns 'descrição' and 'unidade'
-    if preprocess:
-        print("Pré-processamento do edital")
-        for idx, row in tqdm(df_le.iterrows()):
-            df_le.at[idx, 'original_desc'] = re.sub('\n', '', row['original_desc'])
-
-            df_le.at[idx, df_le.columns[desc_column]] = preprocessing_function(row[desc_column], correct_ai = True, rem_rep_tokens = True)
-            
-            df_le.at[idx, df_le.columns[und_column]] = preprocessing_function(row[und_column], rem_stopwords_pr = True)
-            
-    # Creation of the column where the indices of the CMED will be stored
-    df_le['cmed_indexes'] = ""
-
     return df_le
-
-
-
-
-
-
-
-
-
-
-

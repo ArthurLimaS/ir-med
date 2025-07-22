@@ -6,24 +6,90 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
 
-
-# Return lists with all the tokens present in the columns 'principio ativo' (cmed_ai_words) and 'apresentacao' (cmed_pr_words)
-def extract_cmed_words(df_cmed):
-    cmed_ai_words = ""
-    cmed_pr_words = ""
-    for _, row in tqdm(df_cmed.iterrows()):
-        cmed_ai_words += row['principio_ativo'] + " "
-        cmed_pr_words += row['apresentacao'] + " "
-
-    cmed_ai_words = np.unique(word_tokenize(cmed_ai_words))
-    cmed_pr_words = np.unique(word_tokenize(cmed_pr_words))
+def template():
+    """
+    Breve descrição da função
     
-    return cmed_ai_words, cmed_pr_words
+    Parameters:
+    ---------
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
 
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
 
+    Returns:
+    ---------
+    {return_type}
+        {Return description}
+    """
+    return -1
 
-# Extracts from the column 'desc' of a notice the words that appear in the CMED report
+def extract_relevant_words(df_cmed, columns, verbose = False):
+    """
+    Extracts tokens (words) from the specified columns of a DataFrame.
+
+    For each selected column, returns a list of all unique tokens found in that
+    column.
+
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
+
+    columns : list of str
+        Names of the columns to analyze.
+
+    verbose : bool, default False
+        Whether to display progress information during processing.
+
+    Returns
+    -------
+    dict
+        A dictionary where each key is a column name and each value is a list of
+        unique tokens found in that column.
+    """
+    
+    answer_dict = {}
+    iterator = columns
+    if verbose:
+        iterator = tqdm(columns)
+
+    for col in iterator:
+        # Concatena todas as strings da coluna, tokeniza e pega os únicos
+        all_text = " ".join(df_cmed[col].astype(str))
+        tokens = word_tokenize(all_text)
+        answer_dict[col] = np.unique(tokens)
+
+    return answer_dict
+
 def sep_desc(desc, cmed_ai_words, cmed_pr_words):
+    """
+    Extracts words from a notice description that match entries in the CMED
+    report.
+
+    Parameters
+    ----------
+    desc : str
+        Description of a medicine from the public notice.
+
+    cmed_ai_words : list of str
+        List of words representing active ingredients from the CMED report.
+
+    cmed_pr_words : list of str
+        List of words representing pharmaceutical presentations from the CMED
+        report.
+
+    Returns
+    -------
+    tuple of str
+        A tuple containing two strings:
+        - The first string includes words from the description that match active
+          ingredient terms.
+        - The second string includes words that match pharmaceutical
+          presentation terms.
+    """
+
     desc_ai = ""
     desc_pr = ""
 
@@ -34,12 +100,44 @@ def sep_desc(desc, cmed_ai_words, cmed_pr_words):
         if tok in cmed_pr_words:
             desc_pr += tok + " "
         
-    return desc_ai, desc_pr
+    return (desc_ai, desc_pr)
 
-
-
-# Macro function that runs the medicine identification process
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
+    """
+    Runs the complete medicine identification process based on a public notice
+    description.
+
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
+
+    grouped_cmed : DataFrame
+        DataFrame containing grouped CMED data.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public
+        notice.
+
+    und : str
+        Unit description from the 'unidade' column in the notice data.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list of int: Indices of the best matching presentations in the CMED data.
+        - dict: Metadata about the identification process, including:
+            - 'desc_ai': Active ingredient description used for matching.
+            - 'desc_pr': Pharmaceutical presentation description used for matching.
+            - 'active_ingredient_found': The active ingredient that was matched.
+            - 'quant_presentations_matched': Number of matching presentations.
+            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
+            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
+    """
 
     # Classification of the active_ingredient
     active_ingredient, _ = match_ai(grouped_cmed, desc_ai)
@@ -49,10 +147,29 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     
     return filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient)
 
-
-
-# Function that predicits the pharmaceutical ingredient
 def match_ai(grouped_cmed, desc_ai):
+    """
+    Predicts the most likely pharmaceutical active ingredient based on a given
+    description.
+
+    Parameters
+    ----------
+    grouped_cmed : DataFrame
+        DataFrame containing grouped CMED data.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - str: The best matching active ingredient key.
+        - dict: Metadata about the matching process, including:
+            - 'desc_ai': The description used for matching.
+            - 'similarity_value': Similarity score of the best match.
+    """
+
     desc_ai = etl.sort_alphabetically(desc_ai)
     best_match = -1
     best_match_key = ""
@@ -72,10 +189,42 @@ def match_ai(grouped_cmed, desc_ai):
 
     return (best_match_key, process_metadata)
 
-
-
-# Function that returns the presentations that have the most intersection with desc_pr
 def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
+    """
+    Function that returns the presentations that have the most intersection with
+    desc_pr
+    
+    Parameters:
+    ---------
+    df_cmed_filtered : DataFrame
+        DataFrame containing the filtered CMED data based on the active ingredient.
+
+    desc_ai : str
+        Description related to the active ingredient from the public notice.
+    
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public
+        notice.
+    
+    und : str
+        Unit description from the 'unidade' column in the notice data.
+    
+    active_ingredient : str
+        The active ingredient that was matched from the CMED data.
+
+    Returns:
+    ---------
+    tuple
+        A tuple containing:
+        - list of int: Indices of the best matching presentations in the CMED data.
+        - dict: Metadata about the identification process, including:
+            - 'desc_ai': Active ingredient description used for matching.
+            - 'desc_pr': Pharmaceutical presentation description used for matching.
+            - 'active_ingredient_found': The active ingredient that was matched.
+            - 'quant_presentations_matched': Number of matching presentations.
+            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
+            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
+    """
 
     sets = get_sets_from_desc_pr(desc_pr)
     und_sets = get_sets_from_desc_pr(und)
@@ -130,9 +279,22 @@ def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
 
     return (best_matchs, process_metadata)
 
-
-
 def get_sets_from_desc_pr(desc_pr):
+    """
+    Generates all possible sets of words from a given description.
+
+    Parameters
+    ----------
+    desc_pr : str
+        Description related to the pharmaceutical presentation from the public
+        notice.
+
+    Returns
+    -------
+    list of list of str
+        A list containing all possible combinations of words extracted from the
+        description.
+    """
     tokens = word_tokenize(desc_pr)
     n_tokens = len(tokens)
 
