@@ -6,21 +6,62 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
 
-
-# Return lists with all the tokens present in the columns 'principio ativo' (cmed_ai_words) and 'apresentacao' (cmed_pr_words)
-def extract_cmed_words(df_cmed):
-    cmed_ai_words = ""
-    cmed_pr_words = ""
-    for _, row in tqdm(df_cmed.iterrows()):
-        cmed_ai_words += row['principio_ativo'] + " "
-        cmed_pr_words += row['apresentacao'] + " "
-
-    cmed_ai_words = np.unique(word_tokenize(cmed_ai_words))
-    cmed_pr_words = np.unique(word_tokenize(cmed_pr_words))
+def template():
+    """
+    Breve descrição da função
     
-    return cmed_ai_words, cmed_pr_words
+    Parameters:
+    ---------
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
 
+    {parameter_name} : {parameter_type}[, default ?]
+        {Parameter description}
 
+    Returns:
+    ---------
+    {return_type}
+        {Return description}
+    """
+    return -1
+
+def extract_relevant_words(df_cmed, columns, verbose = False):
+    """
+    Extracts tokens (words) from the specified columns of a DataFrame.
+
+    For each selected column, returns a list of all unique tokens found in that
+    column.
+
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
+
+    columns : list of str
+        Names of the columns to analyze.
+
+    verbose : bool, default False
+        Whether to display progress information during processing.
+
+    Returns
+    -------
+    dict
+        A dictionary where each key is a column name and each value is a list of
+        unique tokens found in that column.
+    """
+    
+    answer_dict = {}
+    iterator = columns
+    if verbose:
+        iterator = tqdm(columns)
+
+    for col in iterator:
+        # Concatena todas as strings da coluna, tokeniza e pega os únicos
+        all_text = " ".join(df_cmed[col].astype(str))
+        tokens = word_tokenize(all_text)
+        answer_dict[col] = np.unique(tokens)
+
+    return answer_dict
 
 # Extracts from the column 'desc' of a notice the words that appear in the CMED report
 def sep_desc(desc, cmed_ai_words, cmed_pr_words):
