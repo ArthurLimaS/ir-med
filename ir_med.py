@@ -116,7 +116,7 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
 
     # Colect medicines that have the active ingredient
     idxs = grouped_cmed.loc[grouped_cmed['key'] == ai_found, 'indexes']
-    df_cmed_filtered = df_cmed.iloc[idxs]
+    df_cmed_filtered = df_cmed.iloc[idxs.values[0]]
 
     # Filter medicines based on the pharmaceutical presentation
     best_matches, filter_prs_metadata = filter_prs(df_cmed_filtered, desc_ai,
