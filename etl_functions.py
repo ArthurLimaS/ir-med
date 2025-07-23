@@ -450,13 +450,8 @@ def sort_alphabetically(text):
     str
         A string with the same words, reordered alphabetically.
     """
-    tokens = word_tokenize(text)
-
-    if len(tokens) > 1:
-        tokens.sort()
-        text = " ".join(tokens)
     
-    return text
+    return " ".join(sorted(word_tokenize(text)))
 
 def load_notice(path, sep = ';', decimal = ','):
     """
