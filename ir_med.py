@@ -76,26 +76,25 @@ def split_description(desc, cmed_ai_words, cmed_pr_words):
 
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     """
-    Runs the complete medicine identification process based on a public notice
-    description.
+    Run the complete medicine identification process based on a description from
+    a public notice.
 
     Parameters
     ----------
     df_cmed : DataFrame
-        DataFrame containing the CMED data.
+        DataFrame containing the CMED dataset.
 
     grouped_cmed : DataFrame
         DataFrame containing grouped CMED data.
 
     desc_ai : str
-        Description related to the active ingredient from the public notice.
+        Portion of the description related to the active ingredient.
 
     desc_pr : str
-        Description related to the pharmaceutical presentation from the public
-        notice.
+        Portion of the description related to the pharmaceutical presentation.
 
     und : str
-        Unit description from the 'unidade' column in the notice data.
+        Unit of measurement specified in the public notice.
 
     Returns
     -------
@@ -104,20 +103,30 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
         - list of int: Indices of the best matching presentations in the CMED data.
         - dict: Metadata about the identification process, including:
             - 'desc_ai': Active ingredient description used for matching.
+            - 'active_ingredient_found': The matched active ingredient.
+            - 'similarity_value': Similarity score of the best active ingredient match.
             - 'desc_pr': Pharmaceutical presentation description used for matching.
-            - 'active_ingredient_found': The active ingredient that was matched.
-            - 'quant_presentations_matched': Number of matching presentations.
             - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
-            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
+            - 'quant_presentations_matched': Number of matching presentations.
+            - 'pct_set_reduction': Percentage reduction in CMED entries after filtering.
     """
 
     # Classification of the active_ingredient
-    active_ingredient, _ = match_ai(grouped_cmed, desc_ai)
+    ai_found, match_ai_metadata = match_ai(grouped_cmed, desc_ai)
 
-    # Coleta dos medicamentos da CMED que possuem o principio ativo apontado
-    df_cmed_filtered = df_cmed.iloc[grouped_cmed[grouped_cmed['key'] == active_ingredient].reset_index()['indexes'][0]]
+    # Colect medicines that have the active ingredient
+    idxs = grouped_cmed.loc[grouped_cmed['key'] == ai_found, 'indexes']
+    df_cmed_filtered = df_cmed.iloc[idxs]
+
+    # Filter medicines based on the pharmaceutical presentation
+    best_matches, filter_prs_metadata = filter_prs(df_cmed_filtered, desc_ai,
+                                                 desc_pr, und, ai_found)
     
-    return filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient)
+    # Create process metadata for the whole matching process
+    process_metadata = match_ai_metadata
+    process_metadata.update(filter_prs_metadata)
+
+    return best_matches, process_metadata
 
 def match_ai(grouped_cmed, desc_ai):
     """
@@ -193,8 +202,8 @@ def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
             - 'desc_ai': Active ingredient description used for matching.
             - 'desc_pr': Pharmaceutical presentation description used for matching.
             - 'active_ingredient_found': The active ingredient that was matched.
-            - 'quant_presentations_matched': Number of matching presentations.
             - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
+            - 'quant_presentations_matched': Number of matching presentations.
             - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
     """
 
