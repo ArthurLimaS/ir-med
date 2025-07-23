@@ -6,25 +6,6 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
 
-def template():
-    """
-    Breve descrição da função
-    
-    Parameters:
-    ---------
-    {parameter_name} : {parameter_type}[, default ?]
-        {Parameter description}
-
-    {parameter_name} : {parameter_type}[, default ?]
-        {Parameter description}
-
-    Returns:
-    ---------
-    {return_type}
-        {Return description}
-    """
-    return -1
-
 def extract_relevant_words(df_cmed, columns, verbose = False):
     """
     Extracts tokens (words) from the specified columns of a DataFrame.
