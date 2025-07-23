@@ -474,8 +474,5 @@ def load_notice(path, sep = ';', decimal = ','):
     DataFrame
         A DataFrame containing the data from the Public Notice file.
     """
-    
-    # Load the .csv
-    df_le = pd.read_csv(path, sep = sep, decimal = decimal)
 
-    return df_le
+    return pd.read_csv(path, sep = sep, decimal = decimal)
