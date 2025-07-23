@@ -43,10 +43,10 @@ def identify_relevant_words(df_cmed, columns, verbose = False):
 
     return answer_dict
 
-def sep_desc(desc, cmed_ai_words, cmed_pr_words):
+def split_description(desc, cmed_ai_words, cmed_pr_words):
     """
-    Extracts words from a notice description that match entries in the CMED
-    report.
+    Extract words from a medicine description that match tokens identified in
+    the CMED dataset.
 
     Parameters
     ----------
@@ -54,33 +54,25 @@ def sep_desc(desc, cmed_ai_words, cmed_pr_words):
         Description of a medicine from the public notice.
 
     cmed_ai_words : list of str
-        List of words representing active ingredients from the CMED report.
+        List of tokens identified as active ingredients in the CMED dataset.
 
     cmed_pr_words : list of str
-        List of words representing pharmaceutical presentations from the CMED
-        report.
+        List of tokens identified as pharmaceutical presentations in the CMED
+        dataset.
 
     Returns
     -------
     tuple of str
-        A tuple containing two strings:
-        - The first string includes words from the description that match active
-          ingredient terms.
-        - The second string includes words that match pharmaceutical
-          presentation terms.
+        A tuple containing:
+        - A string with the words from the description that match active ingredient terms.
+        - A string with the words from the description that match pharmaceutical presentation terms.
     """
 
-    desc_ai = ""
-    desc_pr = ""
-
-    for tok in word_tokenize(desc):
-        if tok in cmed_ai_words:
-            desc_ai += tok + " "
+    tokens = word_tokenize(desc)
+    desc_ai = " ".join([tok for tok in tokens if tok in cmed_ai_words])
+    desc_pr = " ".join([tok for tok in tokens if tok in cmed_pr_words])
         
-        if tok in cmed_pr_words:
-            desc_pr += tok + " "
-        
-    return (desc_ai, desc_pr)
+    return desc_ai, desc_pr
 
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     """
