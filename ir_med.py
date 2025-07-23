@@ -5,8 +5,7 @@ from jaro import jaro_winkler_metric
 from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
-
-def extract_relevant_words(df_cmed, columns, verbose = False):
+def identify_relevant_words(df_cmed, columns, verbose = False):
     """
     Extracts tokens (words) from the specified columns of a DataFrame.
 
