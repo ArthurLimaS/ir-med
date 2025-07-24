@@ -112,7 +112,7 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     """
 
     # Classification of the active_ingredient
-    ai_found, match_ai_metadata = match_ai(grouped_cmed, desc_ai)
+    ai_found, predict_ai_metadata = predict_ai(grouped_cmed, desc_ai)
 
     # Colect medicines that have the active ingredient
     idxs = grouped_cmed.loc[grouped_cmed['key'] == ai_found, 'indexes']
@@ -123,12 +123,12 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
                                                  desc_pr, und, ai_found)
     
     # Create process metadata for the whole matching process
-    process_metadata = match_ai_metadata
+    process_metadata = predict_ai_metadata
     process_metadata.update(filter_prs_metadata)
 
     return best_matches, process_metadata
 
-def match_ai(grouped_cmed, desc_ai):
+def predict_ai(grouped_cmed, desc_ai):
     """
     Predicts the most likely pharmaceutical active ingredient based on a given
     description.
@@ -151,24 +151,24 @@ def match_ai(grouped_cmed, desc_ai):
             - 'similarity_value': Similarity score of the best match.
     """
 
-    desc_ai = etl.sort_alphabetically(desc_ai)
-    best_match = -1
-    best_match_key = ""
+    # Sort the description alphabetically
+    desc_ai_sorted = etl.sort_alphabetically(desc_ai)
 
-    for i in range(len(grouped_cmed['key_sorted'])):
-        key_sorted = grouped_cmed['key_sorted'][i]
+    # Calculate the Jaro-Winkler similarity metric for each key in the grouped CMED data
+    metrics = grouped_cmed['key_sorted'] \
+              .map(lambda x: jaro_winkler_metric(desc_ai_sorted, x))
+    
+    # Find the index of the best match
+    best_idx = metrics.idxmax()
 
-        # Similarity calculation
-        metric = jaro_winkler_metric(desc_ai, key_sorted)
-
-        if metric >= best_match:
-            best_match = metric
-            best_match_key = grouped_cmed['key'][i]
+    # Get the best match key
+    best_match_key = grouped_cmed['key_sorted'][best_idx]
+    best_match_value = metrics[best_idx]
 
     process_metadata = {'desc_ai': desc_ai,
-                        'similarity_value': best_match}
+                        'similarity_value': best_match_value}
 
-    return (best_match_key, process_metadata)
+    return best_match_key, process_metadata
 
 def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
     """
