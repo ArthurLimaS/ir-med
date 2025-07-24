@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import re
 from nltk.tokenize import word_tokenize
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from unidecode import unidecode
 
 def load_cmed(path, sep = ';'):
