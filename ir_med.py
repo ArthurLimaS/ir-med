@@ -208,7 +208,7 @@ def match_presentations(df_cmed_filtered, desc_pr, und):
             - 'pct_set_reduction' (float): Percentage reduction in CMED entries after filtering.
     """
 
-    sets = get_sets_from_desc_pr(desc_pr) + get_sets_from_desc_pr(und)
+    sets = extract_ngrams(desc_pr) + extract_ngrams(und)
     best_count = 0
     best_matchs = []
 
@@ -255,46 +255,28 @@ def match_presentations(df_cmed_filtered, desc_pr, und):
 
 
 
-def get_sets_from_desc_pr(desc_pr):
+def extract_ngrams(desc_pr):
     """
-    Generates all possible sets of words from a given description.
+    Extracts all contiguous sequences of words (n-grams) from a given
+    pharmaceutical presentation description.
 
     Parameters
     ----------
     desc_pr : str
-        Description related to the pharmaceutical presentation from the public
-        notice.
+        Substring of the public notice description related to the pharmaceutical
+        presentation.
 
     Returns
     -------
     list of list of str
-        A list containing all possible combinations of words extracted from the
-        description.
+        A list where each sublist represents a contiguous sequence of words
+        (n-gram) extracted from the input description.
     """
     tokens = word_tokenize(desc_pr)
     n_tokens = len(tokens)
 
-    func = lambda x : (x**2 + x) / 2    # Calculate the number of sets to create
-    quant_verificacoes = int(func(n_tokens))
-
-    sets = []
-    subset_size = 1
-    reduction_value = 0
-
-    for i in range(quant_verificacoes):
-        x = i - reduction_value
-        
-        match = (n_tokens - subset_size + 1)
-
-        if x >= match:
-            x -= (n_tokens - subset_size + 1)
-            reduction_value += (n_tokens - subset_size + 1)
-            subset_size += 1
-
-        st = []
-        for j in range(subset_size):
-            st.append(tokens[x+j])
-
-        sets.append(st)
+    sets = [tokens[start_index : start_index + slice_range] \
+            for slice_range in range(1, n_tokens + 1) \
+                for start_index in range(n_tokens - slice_range + 1)]
 
     return sets
