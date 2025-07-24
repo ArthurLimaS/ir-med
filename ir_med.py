@@ -122,9 +122,8 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
 
     # Filter medicines based on the pharmaceutical presentation
     best_matches, match_presentations_metadata = match_presentations(df_cmed_filtered,
-                                                                     desc_ai,
                                                                      desc_pr,
-                                                                     und, ai_found)
+                                                                     und)
     
     # Create process metadata for the whole matching process
     process_metadata = {'active_ingredient_found': ai_found}
