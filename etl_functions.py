@@ -6,7 +6,7 @@ from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 from unidecode import unidecode
 
-def load_cmed(path, sep=';'):
+def load_cmed(path, sep = ';'):
     """
     Load the CMED dataset from a .csv file
     
@@ -25,11 +25,9 @@ def load_cmed(path, sep=';'):
         A DataFrame containing the data from the CMED file.
     """
 
-    df_cmed = pd.read_csv(path, sep = sep)
+    return pd.read_csv(path, sep = sep)
 
-    return df_cmed
-
-def std_cols_names(df_cmed):
+def std_cols_names_preprocessing(df_cmed):
     """
     Standardizes column names by converting them to lowercase, removing
     accents, and replacing spaces with underscores.
@@ -49,10 +47,10 @@ def std_cols_names(df_cmed):
     new_df = df_cmed.copy()
 
     # Turn to lowercase + remove accents + change blank spaces for "_"
-    new_df.rename(str.lower, axis = 'columns', inplace = True)
-    new_df.rename(unidecode, axis = 'columns', inplace = True)
-    new_df.rename(lambda x : x.replace(' ', "_"), axis = 'columns',
-                  inplace = True)
+    new_df.columns = [
+        unidecode(col.lower()).replace(' ', '_')
+        for col in new_df.columns
+    ]
     
     return new_df
 
@@ -113,11 +111,12 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
         The preprocessed text.
     """
 
-    text = text.lower()                   # Apply lowercase
-    text = unidecode(text)                # Remove acentuacion
+    # Lowercase and remove accents
+    text = unidecode(text.lower())
+    # Remove URLs
+    text = re.sub(r'http\S+|www\S+', '', text)
+    # Remove special characters (keep only words and numbers)
     text = re.sub('\W',' ', text)         # Removes specials characters and leaves only words
-    text = re.sub(r'http\S+', '', text)   # Removes URLs with http
-    text = re.sub(r'www\S+', '', text)    # Removes URLs with www
 
     tokens = word_tokenize(text)
 
@@ -165,24 +164,20 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
                         'tenoxican': 'tenoxicam',
                         'trimetroprima': 'trimetoprima'}
         
-        triggers = CORRECTIONS.keys()
-        tokens = [CORRECTIONS[tok] if tok in triggers else tok for tok in tokens]
+        tokens = [CORRECTIONS.get(tok, tok) for tok in tokens]
 
     # Insert blank space between numbers and words
-    text = ""
+    new_tokens = []
     for tok in tokens:
-        match = re.split(r'(\d+)', tok)
-        if (len(match) > 1):
-            for m in match:
-                text += m + " "
-        else:
-            text += tok + " "
+        # Split tokens into words and numbers
+        split_tok = re.findall(r'[A-Za-z]+|\d+', tok)
+
+        new_tokens.extend(split_tok)
+    tokens = new_tokens
 
     # Remove numbers
     if rem_nums:
-        text = re.sub('\d', ' ', text)
-
-    tokens = word_tokenize(text)
+        tokens = [tok for tok in tokens if not tok.isdigit()]
 
     # Remove words that hinder the identification of pharmaceutical active ingredients
     if rem_stopwords_ai:
@@ -212,6 +207,7 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
     # Remove words that hinder the identification of presentations
     if rem_stopwords_pr:
         STOPWORDS_PR = ['embalagem', 'agua', 'de', 'para', 'sodio', 'e']
+        
         tokens = [tok for tok in tokens if tok not in STOPWORDS_PR]
 
     # Abbreviate presentation components based on the ANVISA vocabulary
@@ -352,20 +348,26 @@ def std_preprocessing(text, correct_ai = False, rem_nums = False,
                         'vidro': 'vd',
                         'xampu': 'xamp',
                         'xarope': 'xpe'}
-        forms = ANVISA_ABBREVIATOR.keys()
-
-        tokens = [ANVISA_ABBREVIATOR[tok] if tok in forms else tok for tok in tokens]
+        
+        tokens = [ANVISA_ABBREVIATOR.get(tok, tok) for tok in tokens]
 
     # Removal of repeated words
     if rem_rep_tokens:
-        indexes = np.unique(tokens, return_index=True)[1]
-        tokens = [tokens[index] for index in sorted(indexes)]
+        seen = set()
 
-    text = " ".join(tokens)
+        filtered_tokens = []
+        for x in tokens:
+            if x in seen:
+                continue
 
-    return text
+            seen.add(x)
+            filtered_tokens.append(x)
 
-def grouped_cmed(df_cmed, ai_column, verbose = False):
+        tokens = filtered_tokens
+
+    return " ".join(tokens)
+
+def group_cmed(df_cmed, ai_column, verbose = False):
     """
     Creates a dictionary-like DataFrame where the "keys" are pharmaceutical
     active ingredients and the "values" are the indices of CMED rows that
@@ -391,68 +393,48 @@ def grouped_cmed(df_cmed, ai_column, verbose = False):
         associated row indices from the original CMED data, and the ingredient
         name sorted alphabetically.
     """
-    # Create a list with all the distinct pharmaceutical active ingredients    
-    ais = np.unique(df_cmed[ai_column])
+    # Create a list with all the distinct pharmaceutical active ingredients
+    ais = df_cmed[ai_column].unique()
+
+    if verbose:
+        ais = tqdm(ais, desc = "Grouping active ingredients")
     
-    ### Creation of the DataFrame
+    # Creation of the DataFrame
     keys = []
     keys_sorted = []
     indexes = []
 
-    if verbose:
-        print("Creation of the grouped-cmed DataFrame")
-        ais = tqdm(ais)
-
-
     for key in ais:
-        # Find the rows of CMED that have the pharmaceutical ingredient stored in key
+        # Find the rows of CMED that have the pharmaceutical ingredient of the
+        # current key
         indexes_found = df_cmed.index[df_cmed[ai_column] == key].values
 
         keys.append(key)
         keys_sorted.append(sort_alphabetically(key))
         indexes.append(np.unique(indexes_found))
     
-    data = {'key': keys,
-            'key_sorted': keys_sorted,
-            'indexes': indexes}
+    df_grouped_cmed = pd.DataFrame({
+        'key': keys,
+        'key_sorted': keys_sorted,
+        'indexes': indexes
+    })
 
-    df_grouped_cmed = pd.DataFrame(data)
+    ### Dealing with duplicated key_sorted lines
+    duplicated = df_grouped_cmed[df_grouped_cmed.duplicated(subset = ['key_sorted'],
+                                                            keep = False)]
 
-    ### Dealing with duplicated lines
-
-    duplicated = df_grouped_cmed[df_grouped_cmed.duplicated(subset=['key_sorted'], keep=False)]
-
-    keys = []
-    keys_sorted = []
-    indexes = []
-
-    ais_sorted = np.unique(duplicated['key_sorted'])
-    if verbose:
-        print("Dealing with duplicated pharmaceutical active ingredients")
-        ais_sorted = tqdm(ais_sorted)
-
-    for ksort in ais_sorted:
-        subset = duplicated[duplicated['key_sorted'] == ksort].reset_index(drop = True)
-
-        keys.append(subset['key'][0])
-        keys_sorted.append(ksort)
+    if not duplicated.empty:
+        # Aggregate indexes for each duplicated key_sorted
+        agg = duplicated.groupby('key_sorted').agg({
+            'key': 'first',
+            'indexes': lambda idxs: np.unique(np.concatenate(idxs.tolist()))
+        }).reset_index()
         
-        new_indexes = []
-        for ind in subset['indexes']:
-            new_indexes.extend(ind)
+        # Remove old duplicates and add aggregated ones
+        df_grouped_cmed = df_grouped_cmed.drop(duplicated.index)
+        df_grouped_cmed = pd.concat([df_grouped_cmed, agg], ignore_index =True)
 
-        indexes.append(np.unique(new_indexes))
-
-
-    data = {'key': keys,
-            'key_sorted': keys_sorted,
-            'indexes': indexes}
-
-    new_lines = pd.DataFrame(data).sort_values(by='key_sorted')
-    df_grouped_cmed.drop_duplicates(subset=['key_sorted'], keep = False, inplace = True)
-    df_grouped_cmed = pd.concat([df_grouped_cmed, new_lines], ignore_index = True)
-
-    return df_grouped_cmed.sort_values(by=['key']).reset_index(drop = True)
+    return df_grouped_cmed.sort_values(by = ['key']).reset_index(drop = True)
 
 def sort_alphabetically(text):
     """
@@ -468,13 +450,8 @@ def sort_alphabetically(text):
     str
         A string with the same words, reordered alphabetically.
     """
-    tokens = word_tokenize(text)
-
-    if len(tokens) > 1:
-        tokens.sort()
-        text = " ".join(tokens)
     
-    return text
+    return " ".join(sorted(word_tokenize(text)))
 
 def load_notice(path, sep = ';', decimal = ','):
     """
@@ -497,8 +474,5 @@ def load_notice(path, sep = ';', decimal = ','):
     DataFrame
         A DataFrame containing the data from the Public Notice file.
     """
-    
-    # Load the .csv
-    df_le = pd.read_csv(path, sep = sep, decimal = decimal)
 
-    return df_le
+    return pd.read_csv(path, sep = sep, decimal = decimal)
