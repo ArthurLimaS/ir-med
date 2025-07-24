@@ -166,7 +166,7 @@ def predict_ai(grouped_cmed, desc_ai):
     best_idx = metrics.idxmax()
 
     # Get the best match key
-    best_match_key = grouped_cmed['key_sorted'][best_idx]
+    best_match_key = grouped_cmed['key'][best_idx]
     best_match_value = metrics[best_idx]
 
     process_metadata = {'desc_ai': desc_ai,
