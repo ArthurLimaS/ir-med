@@ -253,8 +253,6 @@ def match_presentations(df_cmed_filtered, desc_pr, und):
 
     return best_matchs, process_metadata
 
-
-
 def extract_ngrams(desc_pr):
     """
     Extracts all contiguous sequences of words (n-grams) from a given
