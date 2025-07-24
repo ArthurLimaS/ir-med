@@ -1,5 +1,4 @@
 import etl_functions as etl
-# import math
 import numpy as np
 from jaro import jaro_winkler_metric
 from nltk.tokenize import word_tokenize
@@ -76,22 +75,24 @@ def split_description(desc, cmed_ai_words, cmed_pr_words):
 
 def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     """
-    Run the complete medicine identification process based on a description from
-    a public notice.
+    Runs the complete medicine identification process based on a description
+    from a public notice.
 
     Parameters
     ----------
-    df_cmed : DataFrame
+    df_cmed : pandas.DataFrame
         DataFrame containing the CMED dataset.
 
-    grouped_cmed : DataFrame
-        DataFrame containing grouped CMED data.
+    grouped_cmed : pandas.DataFrame
+        DataFrame containing CMED data grouped by active ingredient.
 
     desc_ai : str
-        Portion of the description related to the active ingredient.
+        Substring of the public notice description related to the active
+        ingredient.
 
     desc_pr : str
-        Portion of the description related to the pharmaceutical presentation.
+        Substring of the public notice description related to the pharmaceutical
+        presentation.
 
     und : str
         Unit of measurement specified in the public notice.
@@ -100,15 +101,16 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     -------
     tuple
         A tuple containing:
+        
         - list of int: Indices of the best matching presentations in the CMED data.
         - dict: Metadata about the identification process, including:
-            - 'desc_ai': Active ingredient description used for matching.
-            - 'active_ingredient_found': The matched active ingredient.
-            - 'similarity_value': Similarity score of the best active ingredient match.
-            - 'desc_pr': Pharmaceutical presentation description used for matching.
-            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
-            - 'quant_presentations_matched': Number of matching presentations.
-            - 'pct_set_reduction': Percentage reduction in CMED entries after filtering.
+            - 'active_ingredient_found' (str): The matched active ingredient.
+            - 'desc_ai' (str): Active ingredient description used for matching.
+            - 'similarity_value' (float): Similarity score of the best active ingredient match.
+            - 'desc_pr' (str): Pharmaceutical presentation description used for matching.
+            - 'len_cmed_filtered' (int): Number of rows in the filtered CMED DataFrame.
+            - 'len_best_matches' (int): Number of matching presentations after filtering.
+            - 'pct_set_reduction' (float): Percentage reduction in CMED entries after filtering.
     """
 
     # Classification of the active_ingredient
@@ -119,12 +121,15 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
     df_cmed_filtered = df_cmed.iloc[idxs.values[0]]
 
     # Filter medicines based on the pharmaceutical presentation
-    best_matches, filter_prs_metadata = filter_prs(df_cmed_filtered, desc_ai,
-                                                 desc_pr, und, ai_found)
+    best_matches, match_presentations_metadata = match_presentations(df_cmed_filtered,
+                                                                     desc_ai,
+                                                                     desc_pr,
+                                                                     und, ai_found)
     
     # Create process metadata for the whole matching process
-    process_metadata = predict_ai_metadata
-    process_metadata.update(filter_prs_metadata)
+    process_metadata = {'active_ingredient_found': ai_found}
+    process_metadata.update(predict_ai_metadata)
+    process_metadata.update(match_presentations_metadata)
 
     return best_matches, process_metadata
 
@@ -147,8 +152,8 @@ def predict_ai(grouped_cmed, desc_ai):
         A tuple containing:
         - str: The best matching active ingredient key.
         - dict: Metadata about the matching process, including:
-            - 'desc_ai': The description used for matching.
-            - 'similarity_value': Similarity score of the best match.
+            - 'desc_ai' (str): Active ingredient description used for matching.
+            - 'similarity_value' (float): Similarity score of the best active ingredient match.
     """
 
     # Sort the description alphabetically
@@ -170,28 +175,26 @@ def predict_ai(grouped_cmed, desc_ai):
 
     return best_match_key, process_metadata
 
-def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
+def match_presentations(df_cmed_filtered, desc_pr, und):
     """
-    Function that returns the presentations that have the most intersection with
-    desc_pr
+    Identifies entries in the CMED DataFrame whose pharmaceutical presentations 
+    best match the presentation description provided in the public notice.
+
+    This function operates on CMED data already filtered by an active
+    ingredient.
     
     Parameters:
     ---------
     df_cmed_filtered : DataFrame
-        DataFrame containing the filtered CMED data based on the active ingredient.
-
-    desc_ai : str
-        Description related to the active ingredient from the public notice.
+        DataFrame containing the filtered CMED data based on the active
+        ingredient.
     
     desc_pr : str
-        Description related to the pharmaceutical presentation from the public
-        notice.
+        Substring of the public notice description related to the pharmaceutical
+        presentation.
     
     und : str
-        Unit description from the 'unidade' column in the notice data.
-    
-    active_ingredient : str
-        The active ingredient that was matched from the CMED data.
+        Unit of measurement specified in the public notice.
 
     Returns:
     ---------
@@ -199,66 +202,58 @@ def filter_prs(df_cmed_filtered, desc_ai, desc_pr, und, active_ingredient):
         A tuple containing:
         - list of int: Indices of the best matching presentations in the CMED data.
         - dict: Metadata about the identification process, including:
-            - 'desc_ai': Active ingredient description used for matching.
-            - 'desc_pr': Pharmaceutical presentation description used for matching.
-            - 'active_ingredient_found': The active ingredient that was matched.
-            - 'size_cmed_filtered': Number of rows in the filtered CMED DataFrame.
-            - 'quant_presentations_matched': Number of matching presentations.
-            - 'pct_set_reduction': Percentage reduction in the CMED dataset after filtering.
+            - 'desc_pr' (str): Pharmaceutical presentation description used for matching.
+            - 'len_cmed_filtered' (int): Number of rows in the filtered CMED DataFrame.
+            - 'len_best_matches' (int): Number of matching presentations after filtering.
+            - 'pct_set_reduction' (float): Percentage reduction in CMED entries after filtering.
     """
 
-    sets = get_sets_from_desc_pr(desc_pr)
-    und_sets = get_sets_from_desc_pr(und)
-    sets.extend(und_sets)
-
+    sets = get_sets_from_desc_pr(desc_pr) + get_sets_from_desc_pr(und)
     best_count = 0
     best_matchs = []
 
-    for idx_cmed, row_cmed in df_cmed_filtered.iterrows():
+    # Pre-tokenize presentations in the CMED DataFrame
+    presentations_tokenized = df_cmed_filtered['apresentacao'] \
+                              .map(word_tokenize)
 
-        # Check if the presetation has the tokens found in the notice entry
+    for idx_cmed, tokens_cmed in presentations_tokenized.items():
         count = 0
-        tokens_cmed = word_tokenize(row_cmed['apresentacao'])
 
-        for st in sets:
-            
-            # If set only has one token, check if that tokens appears in the CMED presentation
+        for st in sets:            
+            # If set only has one token, check if that tokens appears in the
+            # CMED presentation
             if len(st) == 1:
                 if st[0] in tokens_cmed:
                     count += 1
 
-            # If set has more than a token, check if the sequence of tokens appears, in that order, in the CMED presentation
+            # If set has more than a token, check if the sequence of tokens
+            # appears, in that order, in the CMED presentation
             else:
-                if st[0] in tokens_cmed:
-                    check = True
-                    initial_index = tokens_cmed.index(st[0])
-                    
-                    for i in range(1, len(st)):
-                        current_index = (i+initial_index)
-                        
-                        if (current_index >= len(tokens_cmed)) or \
-                            (st[i] != tokens_cmed[current_index]):
+                window_range = len(tokens_cmed) - len(st) + 1
 
-                            check = False
-                            break
-                                
-                    if check:
+                for i in range(window_range):
+                    if tokens_cmed[i:i+len(st)] == st:
                         count += 1
+                        break
 
         if count > best_count:
             best_count = count
             best_matchs = [idx_cmed]
+
         elif count == best_count:
             best_matchs.append(idx_cmed)
 
-    process_metadata = {'desc_ai': desc_ai,
-                        'desc_pr': desc_pr,
-                        'active_ingredient_found': active_ingredient,
-                        'quant_presentations_matched': len(best_matchs),
-                        'size_cmed_filtered': len(df_cmed_filtered),
-                        'pct_set_reduction': (1 - (len(best_matchs) / len(df_cmed_filtered)))}
+    process_metadata = {
+        'desc_pr': desc_pr,
+        'quant_presentations_matched': len(best_matchs),
+        'size_cmed_filtered': len(df_cmed_filtered),
+        'pct_set_reduction': (1 - (len(best_matchs) / len(df_cmed_filtered))) \
+                             if len(df_cmed_filtered) else 1.0
+    }
 
-    return (best_matchs, process_metadata)
+    return best_matchs, process_metadata
+
+
 
 def get_sets_from_desc_pr(desc_pr):
     """
