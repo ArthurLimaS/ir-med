@@ -122,9 +122,8 @@ def predict(df_cmed, grouped_cmed, desc_ai, desc_pr, und):
 
     # Filter medicines based on the pharmaceutical presentation
     best_matches, match_presentations_metadata = match_presentations(df_cmed_filtered,
-                                                                     desc_ai,
                                                                      desc_pr,
-                                                                     und, ai_found)
+                                                                     und)
     
     # Create process metadata for the whole matching process
     process_metadata = {'active_ingredient_found': ai_found}
@@ -167,7 +166,7 @@ def predict_ai(grouped_cmed, desc_ai):
     best_idx = metrics.idxmax()
 
     # Get the best match key
-    best_match_key = grouped_cmed['key_sorted'][best_idx]
+    best_match_key = grouped_cmed['key'][best_idx]
     best_match_value = metrics[best_idx]
 
     process_metadata = {'desc_ai': desc_ai,
@@ -253,8 +252,6 @@ def match_presentations(df_cmed_filtered, desc_pr, und):
 
     return best_matchs, process_metadata
 
-
-
 def extract_ngrams(desc_pr):
     """
     Extracts all contiguous sequences of words (n-grams) from a given
@@ -280,3 +277,104 @@ def extract_ngrams(desc_pr):
                 for start_index in range(n_tokens - slice_range + 1)]
 
     return sets
+
+def check_ai_prediction(desc, desc_ai, ai_found):
+    """
+    Validate whether the active ingredient identified by the AI is accurate.
+
+    This function checks two conditions:
+    1. Whether all tokens from the AI-identified active ingredient are present
+       in the original description.
+    2. Whether all tokens from the expected active ingredient substring (from
+       the public notice) are present in the AI-identified term.
+
+    Parameters
+    ----------
+    desc : str
+        Full description of the medicine as stated in the public notice.
+
+    desc_ai : str
+        Extracted substring from the public notice related to the active
+        ingredient.
+
+    ai_found : str
+        Active ingredient identified by the AI system.
+
+    Returns
+    -------
+    bool
+        True if both conditions are satisfied, indicating a correct
+        identification; False otherwise.
+    """
+    
+    tokens_ai_found = set(word_tokenize(ai_found))
+    tokens_desc_ai = set(word_tokenize(desc_ai))
+
+    # Check if all tokens present in 'active_ingredient_found' are in 'desc'
+    if not tokens_ai_found.issubset(set(word_tokenize(desc))):
+        return False
+    
+    # Check if all words present in 'desc_ai' are in 'active_ingredient_found'
+    if not tokens_desc_ai.issubset(set(word_tokenize(ai_found))):
+        return False
+    
+    return True
+
+def get_common_tokens(presentations):
+    """
+    Extracts the set of tokens that are common across all given pharmaceutical
+    presentations.
+
+    Parameters
+    ----------
+    presentations : list of str
+        A list of strings, each representing a pharmaceutical presentation.
+
+    Returns
+    -------
+    set
+        A set containing the tokens that appear in every presentation. Returns
+        an empty set if the input list is empty or if there are no tokens common
+        to all presentations.
+    """
+
+    tokens_lists = [set(word_tokenize(pr)) for pr in presentations]
+
+    if not tokens_lists:
+        return set()
+    
+    return set.intersection(*tokens_lists)
+
+def check_pr_predictions(desc_pr, und, common_tokens):
+    """
+    Validates whether the pharmaceutical presentations identified by the AI
+    match the expected description from the public notice.
+
+    Parameters
+    ----------
+    desc_pr : str
+        Substring of the public notice description related to the
+        pharmaceutical presentation.
+
+    und : str
+        Unit of measurement specified in the public notice.
+
+    common_tokens : set
+        Set of tokens that are common across all pharmaceutical presentations
+        matched by the AI.
+
+    Returns
+    -------
+    bool
+        True if the AI-identified presentation contains all expected tokens;
+        False otherwise.
+    """
+    
+    # Check if all tokens in 'desc_pr' and 'und' are present in 'common_tokens'
+    tokens_desc_pr = set(word_tokenize(desc_pr))
+    tokens_und = set(word_tokenize(und))
+
+    # Create a set of the tokens that are not in 'common_tokens'
+    missing = (tokens_desc_pr | tokens_und) - common_tokens
+
+    return len(missing) < 1
