@@ -319,3 +319,62 @@ def check_ai_prediction(desc, desc_ai, ai_found):
         return False
     
     return True
+
+def get_common_tokens(presentations):
+    """
+    Extracts the set of tokens that are common across all given pharmaceutical
+    presentations.
+
+    Parameters
+    ----------
+    presentations : list of str
+        A list of strings, each representing a pharmaceutical presentation.
+
+    Returns
+    -------
+    set
+        A set containing the tokens that appear in every presentation. Returns
+        an empty set if the input list is empty or if there are no tokens common
+        to all presentations.
+    """
+
+    tokens_lists = [set(word_tokenize(pr)) for pr in presentations]
+
+    if not tokens_lists:
+        return set()
+    
+    return set.intersection(*tokens_lists)
+
+def check_pr_predictions(desc_pr, und, common_tokens):
+    """
+    Validates whether the pharmaceutical presentations identified by the AI
+    match the expected description from the public notice.
+
+    Parameters
+    ----------
+    desc_pr : str
+        Substring of the public notice description related to the
+        pharmaceutical presentation.
+
+    und : str
+        Unit of measurement specified in the public notice.
+
+    common_tokens : set
+        Set of tokens that are common across all pharmaceutical presentations
+        matched by the AI.
+
+    Returns
+    -------
+    bool
+        True if the AI-identified presentation contains all expected tokens;
+        False otherwise.
+    """
+    
+    # Check if all tokens in 'desc_pr' and 'und' are present in 'common_tokens'
+    tokens_desc_pr = set(word_tokenize(desc_pr))
+    tokens_und = set(word_tokenize(und))
+
+    # Create a set of the tokens that are not in 'common_tokens'
+    missing = (tokens_desc_pr | tokens_und) - common_tokens
+
+    return len(missing) < 1

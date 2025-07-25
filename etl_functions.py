@@ -475,3 +475,26 @@ def load_notice(path, sep = ';', decimal = ','):
     """
 
     return pd.read_csv(path, sep = sep, decimal = decimal)
+
+def get_presentations(df_cmed, cmed_indexes):
+    """
+    Retrieves the pharmaceutical presentations from the CMED DataFrame based on
+    the provided indexes.
+
+    Parameters
+    ----------
+    df_cmed : DataFrame
+        DataFrame containing the CMED data.
+
+    cmed_indexes : list or array-like
+        List of indexes corresponding to the rows in `df_cmed` from which to
+        retrieve the pharmaceutical presentations.
+
+    Returns
+    -------
+    list
+        A list of pharmaceutical presentations corresponding to the provided
+        indexes.
+    """
+
+    return df_cmed.loc[cmed_indexes, 'apresentacao'].tolist()
