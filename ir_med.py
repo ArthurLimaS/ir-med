@@ -277,3 +277,45 @@ def extract_ngrams(desc_pr):
                 for start_index in range(n_tokens - slice_range + 1)]
 
     return sets
+
+def check_ai_prediction(desc, desc_ai, ai_found):
+    """
+    Validate whether the active ingredient identified by the AI is accurate.
+
+    This function checks two conditions:
+    1. Whether all tokens from the AI-identified active ingredient are present
+       in the original description.
+    2. Whether all tokens from the expected active ingredient substring (from
+       the public notice) are present in the AI-identified term.
+
+    Parameters
+    ----------
+    desc : str
+        Full description of the medicine as stated in the public notice.
+
+    desc_ai : str
+        Extracted substring from the public notice related to the active
+        ingredient.
+
+    ai_found : str
+        Active ingredient identified by the AI system.
+
+    Returns
+    -------
+    bool
+        True if both conditions are satisfied, indicating a correct
+        identification; False otherwise.
+    """
+    
+    tokens_ai_found = set(word_tokenize(ai_found))
+    tokens_desc_ai = set(word_tokenize(desc_ai))
+
+    # Check if all tokens present in 'active_ingredient_found' are in 'desc'
+    if not tokens_ai_found.issubset(set(word_tokenize(desc))):
+        return False
+    
+    # Check if all words present in 'desc_ai' are in 'active_ingredient_found'
+    if not tokens_desc_ai.issubset(set(word_tokenize(ai_found))):
+        return False
+    
+    return True
