@@ -14,7 +14,7 @@ The ```cmed/``` subfolder contains the following:
 
 - **xls_conformidade_gov_2024_03.xls:** Original file downloaded from ANVISA
 - **cmed_clean_2024_03.xls:** Cleaned version with standardized structure and reduced columns
-- **cmed_clean_2024_03.csv:** CSV export of the cleaned file
+- **cmed_clean_2024_03.csv:** CSV export of the cleaned file (separator = ';')
 
 ### CMED Version
 
