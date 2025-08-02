@@ -7,7 +7,7 @@ This project was developed as part of a research effort to investigate reliable 
 
 The methodology is composed of two main phases:
 
-### 🧠 Modeling Phase
+### Modeling Phase
 - **Text Preprocessing:** Cleans and normalizes the CMED data by:
     - Lowercasing and accent removal
     - Abbreviating forms using ANVISA's controlled vocabulary
@@ -15,12 +15,12 @@ The methodology is composed of two main phases:
 - **Clustering:** Groups CMED entries by active ingredient(s), storing them in a hash table for efficient lookup
 - **Token Extraction:** Extracts and stores token sets for active ingredients and medicine presentation info (form, dosage, etc.)
 
-### 🔎 Information Retrieval Phase
+### Information Retrieval Phase
 - **Query Preprocessing:** Applies the same normalization steps to medicine descriptions found in procurement documents
 - **Ingredient Matching:** Uses the Jaro-Winkler similarity metric to identify the closest matching cluster of active ingredients
 - **Presentation Matching:** Computes the overlap between the presentation tokens and CMED entries to finalize matching results
 
-## 🔖 Versioning
+## Versioning
 
 This repository has been updated since the publication of the associated paper. These updates do not alter the core logic or methodology of the IR-MED solution. Instead, they focus on:
 
@@ -38,7 +38,7 @@ This version is also archived and citable via Zenodo:
 
 [![DOI](https://zenodo.org/badge/851151662.svg)](https://doi.org/10.5281/zenodo.15850722).
 
-## 📚 Repository Structure
+## Repository Structure
 ```
 ir-med/
 ├── data/                       # Example input files and lookup databases
@@ -49,7 +49,7 @@ ir-med/
 └── requirements.txt            # Dependencies
 ```
 
-## ⚙️ Installation
+## Installation
 You can set up the environment using pip and Python ≥ 3.8.
 
 ```
@@ -62,7 +62,7 @@ You can set up the environment using pip and Python ≥ 3.8.
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArthurLimaS/ir-med/blob/main/example_notebook.ipynb)
 
-## 📌 Citation
+## Citation
 If you use this work, please cite the accompanying paper:
 
 > Silva, A. L., Lima, A. M., Valença, G., & Cabral, G. G. (2025, May). Ad-hoc vs LLM based System for Information Retrieval in Large Tabular Data: A Comparative Study in Public Medicine Procurement Audits. In Simpósio Brasileiro de Sistemas de Informação (SBSI) (pp. 751-758). SBC.  
