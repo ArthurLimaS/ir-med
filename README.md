@@ -1,6 +1,6 @@
 # IR-Med - An Ad Hoc Information Retrieval Approach for Medicines’ Purchasing Public Notices
 
-## 🔍 Project Overview
+## Project Overview
 IR-Med is an ad-hoc information retrieval system designed to support the auditing of public medicine procurement by matching medicine descriptions from procurement documents with official standardized records from the Brazilian CMED (Chamber of Drug Market Regulation) database.
 
 This project was developed as part of a research effort to investigate reliable and scalable IR methods that can assist audit professionals when facing large volumes of data and limited resources. The solution focuses on identifying relevant drug items by preprocessing free-text medicine descriptions and comparing them to a clustered and normalized version of the CMED data.
