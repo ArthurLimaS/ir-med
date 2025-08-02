@@ -39,25 +39,26 @@ This version is also archived and citable via Zenodo:
 [![DOI](https://zenodo.org/badge/851151662.svg)](https://doi.org/10.5281/zenodo.15850722).
 
 ## 📚 Repository Structure
+```
 ir-med/
-├── etl/                    # ETL functions and data preparation
-├── ir_med/                 # Core IR matching logic
-├── data/                   # Example input files and lookup databases
-├── notebooks/              # Jupyter Notebooks for exploration and evaluation
-├── tests/                  # Unit tests for core functions
-├── requirements.txt        # Dependencies
-├── README.md               # This file
-└── main.py                 # Optional entry point (if available)
+├── data/                       # Example input files and lookup databases
+├── README.md                   # This file
+├── etl_functions.py            # ETL functions and data preparation
+├── example_notebook.ipynb      # Jupyter Notebook with a code example
+├── ir_med.py                   # Core IR matching logic
+└── requirements.txt            # Dependencies
+```
 
 ## ⚙️ Installation
 You can set up the environment using pip and Python ≥ 3.8.
 
-bash
-git clone https://github.com/ArthurLimaS/ir-med.git
-cd ir-med
-python -m venv venv
-source venv/bin/activate  # or .\venv\Scripts\activate on Windows
-pip install -r requirements.txt
+```
+> git clone https://github.com/ArthurLimaS/ir-med.git
+> cd ir-med
+> python -m venv venv
+> source venv/bin/activate  # or .\venv\Scripts\activate on Windows
+> pip install -r requirements.txt
+```
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArthurLimaS/ir-med/blob/main/example_notebook.ipynb)
 
