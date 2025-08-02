@@ -8,17 +8,17 @@ This project was developed as part of a research effort to investigate reliable 
 The methodology is composed of two main phases:
 
 ### 🧠 Modeling Phase
-- Text Preprocessing: Cleans and normalizes the CMED data by:
+- **Text Preprocessing:** Cleans and normalizes the CMED data by:
     - Lowercasing and accent removal
     - Abbreviating forms using ANVISA's controlled vocabulary
     - Removing special characters, numbers (from active ingredients), stopwords, chemical ions, and duplicated terms
-- Clustering: Groups CMED entries by active ingredient(s), storing them in a hash table for efficient lookup
-- Token Extraction: Extracts and stores token sets for active ingredients and medicine presentation info (form, dosage, etc.)
+- **Clustering:** Groups CMED entries by active ingredient(s), storing them in a hash table for efficient lookup
+- **Token Extraction:** Extracts and stores token sets for active ingredients and medicine presentation info (form, dosage, etc.)
 
 ### 🔎 Information Retrieval Phase
-- Query Preprocessing: Applies the same normalization steps to medicine descriptions found in procurement documents
-- Ingredient Matching: Uses the Jaro-Winkler similarity metric to identify the closest matching cluster of active ingredients
-- Presentation Matching: Computes the overlap between the presentation tokens and CMED entries to finalize matching results
+- **Query Preprocessing:** Applies the same normalization steps to medicine descriptions found in procurement documents
+- **Ingredient Matching:** Uses the Jaro-Winkler similarity metric to identify the closest matching cluster of active ingredients
+- **Presentation Matching:** Computes the overlap between the presentation tokens and CMED entries to finalize matching results
 
 ## 🔖 Versioning
 
