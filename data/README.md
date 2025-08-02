@@ -20,5 +20,5 @@ These notices were collected using the public API of the Tribunal de Contas do E
 
 > 📘 API Documentation (pt-BR): https://www.tcepe.tc.br/internet/index.php/dados-abertos
 
-### 📓 Table Extraction Example
+### Table Extraction Example
 The Jupyter Notebook "camelot_example" is included in this folder to demonstrate how to use the camelot-py library to extract the tables from PDF files.
