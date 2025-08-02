@@ -44,7 +44,7 @@ ir-med/
 ├── data/                       # Example input files and lookup databases
 ├── README.md                   # This file
 ├── etl_functions.py            # ETL functions and data preparation
-├── example_notebook.ipynb      # Jupyter Notebook with a code example
+├── ir_med_example.ipynb      # Jupyter Notebook with a code example
 ├── ir_med.py                   # Core IR matching logic
 └── requirements.txt            # Dependencies
 ```
