@@ -1,9 +1,26 @@
+import nltk
 import numpy as np
 import pandas as pd
 import re
 from nltk.tokenize import word_tokenize
 from tqdm.auto import tqdm
 from unidecode import unidecode
+
+def download_nltk_punkt_tab(quiet = False):
+    """
+    Download the NLTK 'punkt' tokenizer data.
+
+    Parameters
+    ----------
+    quiet : bool
+        If True, suppresses output from the nltk.download function.
+
+    Returns
+    -------
+    None
+    """
+    
+    nltk.download('punkt_tab', quiet = quiet)
 
 def load_cmed(path, sep = ';'):
     """
