@@ -1,13 +1,24 @@
 # IR-Med - An Ad Hoc Information Retrieval Approach for Medicines’ Purchasing Public Notices
 
-IR-Med is a proof-of-concept information retrieval system developed to support public auditing tasks, specifically the automated matching of drug specifications with registered pharmaceutical products. This repository contains the codebase for the ad-hoc solution described in the associated research.
-
 # 🔍 Project Overview
-Auditing public expenses often requires analyzing extensive documentation under resource constraints. This project proposes an automated system capable of matching non-standardized drug descriptions from public notices with structured records from a large pharmaceutical database (~25,000 rows).
+IR-Med is an ad-hoc information retrieval system designed to support the auditing of public medicine procurement by matching medicine descriptions from procurement documents with official standardized records from the Brazilian CMED (Chamber of Drug Market Regulation) database.
 
-This system implements an ad-hoc IR solution that:
-- Leverages domain-specific preprocessing and similarity heuristics.
-- Achieves accuracy between 72.4% and 86.9% depending on the configuration.
+This project was developed as part of a research effort to investigate reliable and scalable IR methods that can assist audit professionals when facing large volumes of data and limited resources. The solution focuses on identifying relevant drug items by preprocessing free-text medicine descriptions and comparing them to a clustered and normalized version of the CMED data.
+
+The methodology is composed of two main phases:
+
+## 🧠 Modeling Phase
+- Text Preprocessing: Cleans and normalizes the CMED data by:
+    - Lowercasing and accent removal
+    - Abbreviating forms using ANVISA's controlled vocabulary
+    - Removing special characters, numbers (from active ingredients), stopwords, chemical ions, and duplicated terms
+- Clustering: Groups CMED entries by active ingredient(s), storing them in a hash table for efficient lookup
+- Token Extraction: Extracts and stores token sets for active ingredients and medicine presentation info (form, dosage, etc.)
+
+## 🔎 Information Retrieval Phase
+- Query Preprocessing: Applies the same normalization steps to medicine descriptions found in procurement documents
+- Ingredient Matching: Uses the Jaro-Winkler similarity metric to identify the closest matching cluster of active ingredients
+- Presentation Matching: Computes the overlap between the presentation tokens and CMED entries to finalize matching results
 
 ## 🔖 Versioning
 
@@ -51,6 +62,6 @@ pip install -r requirements.txt
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArthurLimaS/ir-med/blob/main/example_notebook.ipynb)
 
 # 📌 Citation
-If you use this work, please cite the accompanying paper.
+If you use this work, please cite the accompanying paper:
 
 > Silva, A. L., Lima, A. M., Valença, G., & Cabral, G. G. (2025, May). Ad-hoc vs LLM based System for Information Retrieval in Large Tabular Data: A Comparative Study in Public Medicine Procurement Audits. In Simpósio Brasileiro de Sistemas de Informação (SBSI) (pp. 751-758). SBC.  
