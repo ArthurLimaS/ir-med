@@ -53,10 +53,10 @@ ir-med/
 You can set up the environment using pip and Python ≥ 3.8.
 
 ```
-> git clone https://github.com/ArthurLimaS/ir-med.git
+> git clone git@github.com:ArthurLimaS/ir-med.git
 > cd ir-med
-> python -m venv venv
-> source venv/bin/activate  # or .\venv\Scripts\activate on Windows
+> python -m venv ir-med-venv
+> source ir-med-venv/bin/activate  # or .\ir-med-venv\Scripts\activate on Windows
 > pip install -r requirements.txt
 ```
 
