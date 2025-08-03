@@ -1,7 +1,7 @@
 # ```data/``` Folder
 This folder contains the datasets and input files used in the IR-Med solution.
 
-## CMED
+## ```cmed/``` subfolder
 
 The **CMED** (Câmara de Regulação do Mercado de Medicamentos) is a table published monthly by ANVISA, listing all medicines approved for sale in Brazil. Each row provides structured information such as the active ingredient, dosage, pharmaceutical form, barcode (EAN), manufacturer, among others.
 
@@ -10,7 +10,7 @@ Although ANVISA provides these files in spreadsheet format, they include warning
 - Removed non-tabular header/warning rows
 - Retained only the columns relevant for medicine identification
 
-The ```cmed/``` subfolder contains the following:
+The subfolder contains the following:
 
 - **xls_conformidade_gov_2024_03.xls:** Original file downloaded from ANVISA
 - **cmed_clean_2024_03.xls:** Cleaned version with standardized structure and reduced columns
@@ -22,7 +22,7 @@ The CMED data provided corresponds to the version available at the time of the p
 
 >https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos
 
-## Public Procurement Notices
+## ```notices/``` subfolder
 
 This folder also includes a few public procurement notices used to test the IR-Med pipeline. Each notice included inside ```/notices``` is provided in two formats:
 
