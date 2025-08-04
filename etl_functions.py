@@ -37,7 +37,7 @@ def load_cmed(path, sep = ';'):
 
     Returns
     ---------
-    DataFrame
+    pandas.DataFrame
         A DataFrame containing the data from the CMED file.
     """
 
@@ -50,12 +50,12 @@ def std_cols_names_preprocessing(df_cmed):
 
     Parameters
     ----------
-    df_cmed : DataFrame
+    df_cmed : pandas.DataFrame
         A DataFrame containing the data from the CMED file.
 
     Returns
     -------
-    DataFrame
+    pandas.DataFrame
         A DataFrame with standardized column names.
     """
 
@@ -392,7 +392,7 @@ def group_cmed(df_cmed, ai_column, verbose = False):
 
     Parameters
     ----------
-    df_cmed : DataFrame
+    df_cmed : pandas.DataFrame
         DataFrame containing the CMED data.
 
     ai_column : str
@@ -404,7 +404,7 @@ def group_cmed(df_cmed, ai_column, verbose = False):
 
     Returns
     -------
-    DataFrame
+    pandas.DataFrame
         A DataFrame where each row represents a pharmaceutical ingredient, its
         associated row indices from the original CMED data, and the ingredient
         name sorted alphabetically.
@@ -487,7 +487,7 @@ def load_notice(path, sep = ';', decimal = ','):
 
     Returns
     -------
-    DataFrame
+    pandas.DataFrame
         A DataFrame containing the data from the Public Notice file.
     """
 
@@ -500,7 +500,7 @@ def get_presentations(df_cmed, cmed_indexes):
 
     Parameters
     ----------
-    df_cmed : DataFrame
+    df_cmed : pandas.DataFrame
         DataFrame containing the CMED data.
 
     cmed_indexes : list or array-like

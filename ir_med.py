@@ -13,7 +13,7 @@ def identify_relevant_words(df_cmed, columns, verbose = False):
 
     Parameters
     ----------
-    df_cmed : DataFrame
+    df_cmed : pandas.DataFrame
         DataFrame containing the CMED data.
 
     columns : list of str
@@ -139,7 +139,7 @@ def predict_ai(grouped_cmed, desc_ai):
 
     Parameters
     ----------
-    grouped_cmed : DataFrame
+    grouped_cmed : pandas.DataFrame
         DataFrame containing grouped CMED data.
 
     desc_ai : str
@@ -184,7 +184,7 @@ def match_presentations(df_cmed_filtered, desc_pr, und):
     
     Parameters:
     ---------
-    df_cmed_filtered : DataFrame
+    df_cmed_filtered : pandas.DataFrame
         DataFrame containing the filtered CMED data based on the active
         ingredient.
     
