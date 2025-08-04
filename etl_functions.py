@@ -6,6 +6,79 @@ from nltk.tokenize import word_tokenize
 from tqdm.auto import tqdm
 from unidecode import unidecode
 
+def csv_creator(tables, export_path, header, drop_columns = [0],
+                descricao_column = 0, preco_column = 3):
+    """
+    Generates a cleaned CSV file from a list of Camelot tables.
+
+    Parameters
+    ----------
+    tables : camelot.core.TableList
+        List of Camelot tables extracted from the notice PDF.
+
+    export_path : str
+        Path to save the resulting CSV file.
+
+    header : list of str
+        Column names to assign to the final table.
+
+    drop_columns : list of int
+        List of column indices to drop from the final table. These columns may
+        be removed due to irrelevance or formatting issues.
+
+    descricao_column : int
+        Index of the column that contains the description of the required
+        active ingredient.
+
+    preco_column : int
+        Index of the column that contains the required price.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A cleaned DataFrame created from the Camelot tables.
+    """
+
+    # Concatenate all tables
+    data = np.vstack([tb.df.values for tb in tables])
+    final_table = pd.DataFrame(data, columns = header)
+
+    # Remove columns that aren't relevant to the problem
+    final_table.drop(
+        columns = final_table.columns[drop_columns],
+        inplace = True
+    )
+
+    # Remove empty sstring and drop rows with NaN
+    #   - Useful in tables that have the total sum at the end
+    final_table.replace('', np.nan, inplace = True)
+    final_table.dropna(inplace = True)
+
+    # Remove duplicate rows based on description and price columns
+    final_table.drop_duplicates(
+        subset = [final_table.columns[descricao_column],
+                  final_table.columns[preco_column]],
+        inplace = True
+    )
+
+    # Order the active ingredients in alphabetical order
+    final_table.sort_values(
+        by = [final_table.columns[descricao_column]],
+        key = lambda s : s.apply(lambda text : unidecode(text.lower())),
+        inplace = True,
+        ignore_index = True
+    )
+
+    # Create the CSV
+    final_table.to_csv(
+        export_path,
+        sep = ';',
+        decimal = ',',
+        index = False
+    )
+
+    return final_table
+
 def download_nltk_punkt_tab(quiet = False):
     """
     Download the NLTK 'punkt' tokenizer data.
