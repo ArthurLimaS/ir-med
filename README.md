@@ -44,7 +44,8 @@ ir-med/
 ├── data/                       # Example input files and lookup databases
 ├── README.md                   # This file
 ├── etl_functions.py            # ETL functions and data preparation
-├── ir_med_example.ipynb      # Jupyter Notebook with a code example
+├── ir_med_example.ipynb        # Example notebook demonstrating the IR-Med pipeline
+├── camelot_example             # Example notebook showing how to extract tablem from PDFs using camelot
 ├── ir_med.py                   # Core IR matching logic
 └── requirements.txt            # Dependencies
 ```

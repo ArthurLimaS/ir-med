@@ -36,6 +36,3 @@ These documents were collected via the public API from the Tribunal de Contas do
 > **API Endpoint:** https://sistemas.tce.pe.gov.br/DadosAbertos/Exemplo!listar
 
 > **API Documentation (pt-BR):** https://www.tcepe.tc.br/internet/index.php/dados-abertos
-
-### Table Extraction Example
-To demonstrate how tables were extracted from the PDF notices, a sample Jupyter Notebook named camelot_example.ipynb is provided. It shows how to use the camelot-py library for PDF table extraction.
