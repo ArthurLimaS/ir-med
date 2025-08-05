@@ -61,8 +61,6 @@ You can set up the environment using pip and Python ≥ 3.8.
 > pip install -r requirements.txt
 ```
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArthurLimaS/ir-med/blob/main/example_notebook.ipynb)
-
 ## Citation
 If you use this work, please cite the accompanying paper:
 
